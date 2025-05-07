@@ -1,0 +1,11 @@
+wordpress_url: "http://localhost"
+wordpress_site_title: "Mon Super Blog"
+wordpress_admin_user: "admin"
+wordpress_admin_password: "admin123"
+wordpress_admin_email: "admin@example.com"
+
+# Pour WP-CLI, faites correspondre avec les valeurs déjà utilisées pour MySQL
+db_name: "{{ mysql_db }}"
+db_user: "{{ mysql_user }}"
+db_pass: "{{ mysql_password }}"
+

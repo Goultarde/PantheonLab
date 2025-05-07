@@ -6,6 +6,7 @@
   become: true
   vars_files:
     - vars/default.yml
+    - vars/vars.yml
 
   tasks:
     - name: Install prerequisites
@@ -135,6 +136,42 @@
       template:
         src: "files/wp-config.php.j2"
         dest: "/var/www/{{ http_host }}/wordpress/wp-config.php"
+      tags: [ wordpress ]
+
+    - name: Installer WP-CLI
+      get_url:
+        url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+        dest: /usr/local/bin/wp
+        mode: '0755'
+      tags: [ wordpress ]
+
+    - name: Check if WordPress is already installed (via wp-cli)
+      become: yes
+      become_user: www-data
+      args:
+        chdir: /var/www/{{ http_host }}/wordpress
+      shell: wp core is-installed --allow-root
+      register: wp_core_installed
+      ignore_errors: yes
+      tags: [ wordpress ]
+
+# WP-CLI
+
+    - name: Installer WordPress via WP-CLI
+      become: yes
+      become_user: www-data
+      args:
+        chdir: /var/www/{{ http_host }}/wordpress
+      shell: |
+        wp core install \
+          --url={{ wordpress_url }} \
+          --title="{{ wordpress_site_title }}" \
+          --admin_user={{ wordpress_admin_user }} \
+          --admin_password={{ wordpress_admin_password }} \
+          --admin_email={{ wordpress_admin_email }} \
+          --skip-email \
+          --allow-root
+      when: wp_core_installed.rc != 0
       tags: [ wordpress ]
 
   handlers:
