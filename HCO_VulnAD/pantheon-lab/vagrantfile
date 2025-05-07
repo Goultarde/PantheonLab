@@ -1,0 +1,29 @@
+
+Vagrant.configure("2") do |config|
+  config.vm.define "linux" do |linux|
+    linux.vm.box = "ubuntu/bionic64"
+    linux.vm.hostname = "linux"
+
+    # Réseau privé (accès depuis l’hôte uniquement)
+    linux.vm.network "private_network", ip: "192.168.56.10"
+
+    # Synchro des fichiers Ansible
+    linux.vm.synced_folder "./ansible", "/home/vagrant/ansible"
+
+    # Préinstall Python3 pour Ansible
+    linux.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update
+      sudo apt-get install -y python3
+    SHELL
+
+    # Provision Ansible local dans la VM
+    linux.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "/home/vagrant/ansible/playbook.yml"
+      ansible.compatibility_mode = "2.0"
+      ansible.extra_vars = {
+        ansible_python_interpreter: "/usr/bin/python3"
+      }
+    end
+  end
+end
+
