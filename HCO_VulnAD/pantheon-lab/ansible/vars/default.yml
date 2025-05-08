@@ -9,7 +9,8 @@ mysql_user: "sammy"
 mysql_password: "password"
 
 #HTTP Settings
-http_host: "localhost"
-http_conf: "localhost.conf"
+#http_host: "localhost"
+http_host: "pantheon.god"
+http_conf: "pantheon_wordpress.conf"
 http_port: "80"
 
