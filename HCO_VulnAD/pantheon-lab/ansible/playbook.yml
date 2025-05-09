@@ -7,6 +7,7 @@
   vars_files:
     - vars/default.yml
     - vars/vars.yml
+    - vars/descriptions.yml
 
   tasks:
     # ---------------------
@@ -248,7 +249,7 @@
           --post_type=page \
           --post_title="Bienvenue au panthéon" \
           --post_name="bienvenue-au-pantheon" \
-          --post_content="Bienvenue au panthéon. L'accès à ce dernier est réservé aux dieux et aux plus braves..." \
+          --post_content="{{ bienvenue_au_pantheon }}" \
           --post_status=publish \
           --allow-root
       tags: [ wordpress ]
@@ -264,86 +265,71 @@
 
     - name: Create pages for each Greek god
       become_user: www-data
-      vars:
-        greek_gods:
-          - { name: Zeus, img: zeus.png, desc: "Maître de l’Olympe et dieu du ciel et de la foudre." }
-          - { name: Héra, img: hera.png, desc: "Déesse du mariage et de la famille, épouse de Zeus." }
-          - { name: Poséidon, img: poseidon.png, desc: "Dieu de la mer, des tempêtes et des tremblements de terre." }
-          - { name: Déméter, img: demeter.png, desc: "Déesse de l’agriculture et des moissons." }
-          - { name: Athéna, img: athena.png, desc: "Déesse de la sagesse et de la stratégie militaire." }
-          - { name: Apollon, img: apollon.png, desc: "Dieu de la musique, de la poésie et du soleil." }
-          - { name: Artémis, img: artemis.png, desc: "Déesse de la chasse et de la nature sauvage." }
-          - { name: Arès, img: ares.png, desc: "Dieu de la guerre brutale." }
-          - { name: Aphrodite, img: aphrodite.png, desc: "Déesse de l’amour et de la beauté." }
-          - { name: Héphaïstos, img: hephaistos.png, desc: "Dieu du feu et de la forge." }
-          - { name: Hermès, img: hermes.png, desc: "Messager des dieux et dieu du commerce." }
-          - { name: dionysos, img: dionysos.png, desc: "Dieu des enfers et des morts." }
       loop: "{{ greek_gods }}"
+      loop_control:
+        loop_var: dieu
       args:
         chdir: "/var/www/{{ http_host }}/wordpress"
       shell: |
-        IMAGE_ID=$(wp media import "wp-content/uploads/{{ item.img }}" --title="{{ item.name }}" --porcelain --allow-root)
+        IMAGE_ID=$(wp media import "wp-content/uploads/{{ dieu.img }}" --title="{{ dieu.name }}" --porcelain --allow-root)
         IMAGE_URL=$(wp post get $IMAGE_ID --field=guid --allow-root)
         wp post create \
           --post_type=page \
-          --post_title="{{ item.name }}" \
-          --post_content="<img src='${IMAGE_URL}' style='max-width: 300px'><p>{{ item.desc }}</p>" \
+          --post_title="{{ dieu.name }}" \
+          --post_content="<img src='${IMAGE_URL}' style='max-width: 300px'><p>{{ dieu.desc }}</p>" \
           --post_status=publish \
           --allow-root
       tags: [ wordpress ]
 
-
-          #IMG_ID=$(wp media import "wp-content/uploads/{{ item.img }}" --title="{{ item.name }}" --porcelain --allow-root)
-    - name: Create page "Les 12 dieux" with grid
+    - name: Récupérer les slugs et URLs des dieux depuis WordPress
       become_user: www-data
       args:
         chdir: "/var/www/{{ http_host }}/wordpress"
       shell: |
-        cat <<'EOF' > page-content.html
-        <style>
-          .god-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-          }
-          .god-card {
-            width: 30%;
-            margin: 1%;
-            text-align: center;
-          }
-          .god-card img {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            object-fit: cover;
-            border-radius: 8px;
-          }
-        </style>
-        <div class="god-grid">
-        EOF
-        for NAME in Zeus Héra Poséidon Déméter Athéna Apollon Artémis Arès Aphrodite Héphaïstos Hermès dionysos; do
-          SLUG=$(wp post list --post_type=page --title="$NAME" --field=post_name --allow-root)
-          IMG_ID=$(wp post list --post_type=attachment --title="$NAME" --format=ids --allow-root | head -n1)
-          IMG_URL=$(wp post get "$IMG_ID" --field=guid --allow-root)
-          cat <<EOF >> page-content.html
-          <div class="god-card">
-            <a href="/$SLUG">
-              <img src="$IMG_URL" alt="$NAME">
-              <p><strong>$NAME</strong></p>
-            </a>
-          </div>
-        EOF
-        done
-        echo "</div>" >> page-content.html
+        SLUG=$(wp post list --post_type=page --title="{{ dieu.name }}" --field=post_name --allow-root)
+        IMG_ID=$(wp post list --post_type=attachment --title="{{ dieu.name }}" --format=ids --allow-root | head -n1)
+        IMG_URL=$(wp post get "$IMG_ID" --field=guid --allow-root)
+        echo "{{ dieu.name }}|$SLUG|$IMG_URL"
+      loop: "{{ greek_gods }}"
+      loop_control:
+        loop_var: dieu
+      register: wp_dieux_data
+      changed_when: false
+      tags: [ wordpress ]
+
+    
+    
+    - name: Transformer les données en dictionnaire utilisable
+      set_fact:
+        greek_gods_details: "{{ _god_data }}"
+      vars:
+        _god_data: >-
+          [{% for result in wp_dieux_data.results %}
+            {% set parts = result.stdout.split('|') %}
+            {"name": "{{ parts[0] | trim }}", "slug": "{{ parts[1] | trim }}", "img_url": "{{ parts[2] | trim }}"}{% if not loop.last %},{% endif %}
+          {% endfor %}]
+      tags: [ wordpress ]
+
+
+    - name: Générer la page HTML des 12 dieux depuis un template
+      template:
+        src: "files/les-12-dieux.html.j2"
+        dest: "/var/www/{{ http_host }}/wordpress/les-12-dieux.html"
+
+    - name: Créer la page WordPress "Les 12 dieux"
+      become_user: www-data
+      args:
+        chdir: "/var/www/{{ http_host }}/wordpress"
+      shell: |
+        CONTENT=$(cat les-12-dieux.html)
         wp post create \
           --post_type=page \
           --post_title="Les 12 dieux" \
           --post_name="les-12-dieux" \
-          --post_content="$(cat page-content.html)" \
+          --post_content="$CONTENT" \
           --post_status=publish \
           --allow-root
-        rm page-content.html
       tags: [ wordpress ]
-
 
     - name: Create main menu
       become_user: www-data

@@ -11,3 +11,18 @@ db_name: "{{ mysql_db }}"
 db_user: "{{ mysql_user }}"
 db_pass: "{{ mysql_password }}"
 
+# Dieu grecs
+greek_gods:
+  - { name: Zeus, img: img_zeus.png, desc: "{{ zeus_desc }}" }
+  - { name: Héra, img: img_hera.png, desc: "{{ hera_desc }}" }
+  - { name: Poséidon, img: img_poseidon.png, desc: "{{ poseidon_desc }}" }
+  - { name: Déméter, img: img_demeter.png, desc: "{{ demeter_desc }}" }
+  - { name: Athéna, img: img_athena.png, desc: "{{ athena_desc }}" }
+  - { name: Apollon, img: img_apollon.png, desc: "{{ apollon_desc }}" }
+  - { name: Artémis, img: img_artemis.png, desc: "{{ artemis_desc }}" }
+  - { name: Arès, img: img_ares.png, desc: "{{ ares_desc }}" }
+  - { name: Aphrodite, img: img_aphrodite.png, desc: "{{ aphrodite_desc }}" }
+  - { name: Héphaïstos, img: img_hephaistos.png, desc: "{{ hephaistos_desc }}" }
+  - { name: Hermès, img: img_hermes.png, desc: "{{ hermes_desc }}" }
+  - { name: Dionysos, img: img_dionysos.png, desc: "{{ dionysos_desc }}" }
+

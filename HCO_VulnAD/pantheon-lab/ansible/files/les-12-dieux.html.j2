@@ -1,0 +1,30 @@
+<style>
+  .god-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+  .god-card {
+    width: 30%;
+    margin: 1%;
+    text-align: center;
+  }
+  .god-card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+</style>
+
+
+<div class="god-grid">
+{% for dieu in greek_gods_details %}
+  <div class="god-card">
+    <a href="/{{ dieu.slug }}">
+      <img src="{{ dieu.img_url }}" alt="{{ dieu.name }}">
+      <p><strong>{{ dieu.name }}</strong></p>
+    </a>
+  </div>
+{% endfor %}
+</div>
