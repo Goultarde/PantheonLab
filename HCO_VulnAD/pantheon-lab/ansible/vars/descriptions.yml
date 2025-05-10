@@ -1,17 +1,54 @@
 bienvenue_au_pantheon: "L'accès au panthéon est réservé aux dieux et aux plus braves.\n
 Le panthéon est impénétrable.Inutile d'essayer de rentrer de force. Pour nous rejoindre, vous devrez passer une batterie d'épreuves afin de prouver votre valeur.\n
 En attendant la sortie de ces épreuves, voici une présentation des 12 dieux présents au panthéon"
-zeus_desc: "Maître de l’Olympe et dieu du ciel et de la foudre."
-hera_desc: "Déesse du mariage et de la famille, épouse de Zeus."
-poseidon_desc: "Dieu de la mer, des tempêtes et des tremblements de terre."
-demeter_desc: "Déesse de l’agriculture et des moissons."
-athena_desc: "Déesse de la sagesse et de la stratégie militaire."
-apollon_desc: "Dieu de la musique, de la poésie et du soleil."
-artemis_desc: "Déesse de la chasse et de la nature sauvage."
-ares_desc: "Dieu de la guerre brutale."
-aphrodite_desc: "Déesse de l’amour et de la beauté."
-hephaistos_desc: "Dieu du feu et de la forge."
-hermes_desc: "Messager des dieux et dieu du commerce."
-dionysos_desc: "Dieu du vin et de la fête."
 
+
+zeus_desc: |
+  Je suis Zeus, le roi de l’Olympe, le maître incontesté du ciel, de la foudre et du tonnerre. Mon autorité s'étend sur les dieux comme sur les mortels, et lorsque je parle, même les plus puissants se taisent.
+  J’ai mis fin au règne des Titans pour instaurer l’ordre divin, et chaque éclat d’éclair dans le ciel rappelle ma souveraineté. 
+  Je protège les lois, veille à la justice et punis les parjures. Si tu respectes l'équilibre du monde, tu trouveras ma faveur. Sinon, prépare-toi à sentir la colère du ciel.
+
+hera_desc: |
+  Je suis Héra, grande reine de l’Olympe, épouse de Zeus, déesse du mariage, de la fidélité et des femmes. Je veille sur l’union sacrée qui lie deux âmes, et protège les mères, les enfants et les familles. 
+  Majestueuse et redoutable, je suis la force tranquille derrière le trône de l’Olympe, mais ma colère peut être aussi implacable que l’amour que je défends. Mon regard perce les secrets, et ma main maintient l’ordre au cœur des relations humaines et divines.
+
+poseidon_desc: |
+  Je suis Poséidon, le souverain des océans, le seigneur des tempêtes et le maître des profondeurs. Mon trident soulève les vagues et fait trembler la terre. Les marins me craignent autant qu’ils m’implorent, car je peux offrir la traversée paisible ou la furie des abysses.
+  Frère de Zeus, mon royaume s’étend là où la lumière se perd. Je suis la force primitive de l’eau, changeante, imprévisible, puissante, et éternelle.
+
+demeter_desc: |
+  Je suis Déméter, déesse nourricière, gardienne de la terre cultivée, des moissons et de la fertilité. Chaque gerbe de blé est une offrande à mon amour pour l’humanité. Lorsque ma fille Perséphone fut enlevée, l’hiver recouvrit le monde : 
+  c’est ainsi que naquit le cycle des saisons. Mon cœur est lié à celui de la terre, et tant que les hommes sèment et récoltent, je veille sur eux avec tendresse et exigence.
+
+athena_desc: |
+  Je suis Athéna, née toute armée du crâne de Zeus, déesse de la sagesse, de la stratégie et de l’intelligence éclairée. Contrairement à Arès, je ne suis pas la brutalité, mais la guerre pensée, la tactique subtile, l’art de vaincre sans verser le sang. 
+  Je protège les cités justes, j’inspire les philosophes, les artisans et les rois. Là où règne la logique, l’équité et le savoir, mon esprit veille.
+
+apollon_desc: |
+  Je suis Apollon, éclat du soleil, musicien des sphères célestes, dieu des arts, de la lumière, de la médecine et de la vérité. Ma lyre fait danser les muses, et mes flèches frappent les injustes. À Delphes, mes oracles guident les pas des rois.
+  Je suis l’harmonie, le rayonnement, la clarté qui éclaire autant les corps que les âmes. Je suis la beauté masculine incarnée, mais aussi le feu impitoyable de la révélation.
+
+artemis_desc: |
+  Je suis Artémis, sœur d’Apollon, déesse de la chasse, de la nature sauvage et de la lune. Libre et farouche, je parcours les forêts nocturnes, accompagnée de mes compagnes, vierges et fières comme moi. 
+  Je protège les naissances, les bêtes, les jeunes filles et les instincts premiers. Ma flèche est silencieuse, rapide et juste. Je suis l’appel de la solitude, le mystère des bois, la lumière argentée sur l’écorce.
+
+ares_desc: |
+  Je suis Arès, incarnation vivante du conflit, dieu de la guerre brute, du sang versé et de la rage incontrôlée. Là où je passe, le sol tremble sous le pas des armées, et les cris remplacent le chant des oiseaux. 
+  Je ne suis pas aimé des dieux, mais dans le cœur des combattants, mon nom résonne avec passion. Je suis l'élan irrépressible du combat, la sueur, la peur, la force animale du guerrier qui n’a plus rien à perdre.
+
+aphrodite_desc: |
+  Je suis Aphrodite, née de l’écume des mers, déesse de l’amour, du désir et de la beauté envoûtante. D’un seul regard, je fais plier les cœurs les plus fiers. Je suis dans la caresse d’un amant, dans le parfum des fleurs au printemps, dans le trouble d’un regard volé. 
+  Je peux être douce ou cruelle, car l’amour peut élever comme briser. Je suis la force la plus irrésistible du monde : celle qui fait tomber les héros et naître les poètes.
+
+hephaistos_desc: |
+  Je suis Héphaïstos, maître du feu et des forges divines. Mon atelier brûle au cœur des volcans, et mes mains, bien qu’endurcies et marquées, créent des merveilles que même les dieux admirent. 
+  J’ai forgé les armes d’Achille, le trône de Zeus, les bijoux d’Aphrodite. On m’a rejeté pour ma difformité, mais mon génie ne peut être ignoré. Je suis la preuve que la puissance naît parfois dans la douleur et la solitude.
+
+hermes_desc: |
+  Je suis Hermès, le messager ailé, le dieu des voyageurs, des commerçants, des voleurs, et des frontières. Je traverse les mondes, de l’Olympe aux Enfers, porteur des messages divins et des secrets des hommes. Mon esprit est vif, ma langue affûtée, et mes mains légères. 
+  Je suis le mouvement, le souffle du vent, la ruse bienveillante. Là où il faut guider, négocier, tromper ou inspirer, je suis présent, toujours un pas devant.
+
+dionysos_desc: |
+  Je suis Dionysos, dieu du vin, de l’extase, des mystères et des fêtes déchaînées. Mon culte renverse les règles, brise les chaînes, libère les émotions les plus enfouies. Je suis l’euphorie, la folie divine, le délire sacré. 
+  Mes fidèles dansent jusqu’à l’oubli de soi, ivres de vie. Je suis la transgression créatrice, l’oubli nécessaire pour renaître, le chaos d’où naît la joie pure.
 
