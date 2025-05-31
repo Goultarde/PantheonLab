@@ -19,6 +19,32 @@
         LANG: fr_FR.UTF-8
         LC_ALL: fr_FR.UTF-8
 
+    - name: Créer le répertoire .ssh pour Hermès
+      ansible.builtin.file:
+        path: /home/hermes/.ssh
+        state: directory
+        mode: '0700'
+        owner: hermes
+        group: hermes
+
+    - name: Créer le fichier authorized_keys pour Hermès
+      ansible.builtin.copy:
+        content: |
+          Si tu peux voir ce message, c'est que tu feras probablement l'affaire pour faire tomber Zeus.
+          Fais ce que tu a à faire, et pas d'inquiétude : il ne quitte jamais son trône, il ne verra pas ce message. D'ailleurs, si tu est ici c'est aussi par négligence de sa part.
+          Débrouille-toi pour lui donner une leçon. Moi, je ne peux pas t'aider plus que ça. Bonne chance.
+        dest: /home/hermes/.ssh/authorized_keys
+        mode: '0600'
+        owner: hermes
+        group: hermes
+
+    - name: Configurer les ACLs pour www-data
+      ansible.builtin.shell: |
+        setfacl -m u:www-data:rw /home/hermes/.ssh/authorized_keys
+        setfacl -m u:www-data:x /home/hermes/.ssh/
+      args:
+        creates: /home/hermes/.ssh/acls_configured
+
     - name: Configurer Apache pour l'encodage UTF-8
       ansible.builtin.copy:
         src: files/conf/apache2-encoding.conf
@@ -35,7 +61,7 @@
 
     - name: Créer le fichier notes.txt
       ansible.builtin.template:
-        src: templates/notes.txt.j2
+        src: files/templates/notes.txt.j2
         dest: /var/www/{{ http_host }}/wordpress/wp-content/notes.txt
         mode: '0644'
         owner: www-data
