@@ -1,16 +1,3 @@
-#wordpress_url: "http://192.168.56.10"
-wordpress_url: "http://pantheon.god"
-wordpress_site_title: "Pantheon"
-wordpress_admin_user: "admin"
-wordpress_admin_password: "admin123"
-wordpress_admin_email: "admin@pantheon.god"
-
-
-# Pour WP-CLI, faites correspondre avec les valeurs déjà utilisées pour MySQL
-db_name: "{{ mysql_db }}"
-db_user: "{{ mysql_user }}"
-db_pass: "{{ mysql_password }}"
-
 # Dieu grecs
 greek_gods:
   - { name: Zeus, img: img_zeus.png, desc: "{{ zeus_desc }}" }
@@ -25,4 +12,18 @@ greek_gods:
   - { name: Héphaïstos, img: img_hephaistos.png, desc: "{{ hephaistos_desc }}" }
   - { name: Hermès, img: img_hermes.png, desc: "{{ hermes_desc }}" }
   - { name: Dionysos, img: img_dionysos.png, desc: "{{ dionysos_desc }}" }
+
+wordpress_users_gods:
+  - { name: Zeus, password: "A8!zEus#2025" }
+  - { name: Héra, password: "H3r@!2025" }
+  - { name: Poséidon, password: "P0s3!d0n@2025" }
+  - { name: Déméter, password: "D3m3t3r!2025" }
+  - { name: Athéna, password: "Ath3n@!2025" }
+  - { name: Apollon, password: "Ap0ll0n!2025" }
+  - { name: Artémis, password: "Art3m!s@2025" }
+  - { name: Arès, password: "Ar3s!2025" }
+  - { name: Aphrodite, password: "Aphrod!t3@2025" }
+  - { name: Héphaïstos, password: "H3ph@!st0s2025" }
+  - { name: Hermès, password: "H3m€$$!2025" }
+  - { name: Dionysos, password: "D!0nys0s@2025" }
 

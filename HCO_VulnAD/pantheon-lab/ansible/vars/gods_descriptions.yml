@@ -1,7 +1,7 @@
-bienvenue_au_pantheon: "L'accès au panthéon est réservé aux dieux et aux plus braves.\n
-Le panthéon est impénétrable.Inutile d'essayer de rentrer de force. Pour nous rejoindre, vous devrez passer une batterie d'épreuves afin de prouver votre valeur.\n
-En attendant la sortie de ces épreuves, voici une présentation des 12 dieux présents au panthéon"
-
+bienvenue_au_pantheon: |
+  L'accès au panthéon est réservé aux dieux et aux plus braves.
+  Le panthéon est impénétrable.Inutile d'essayer de rentrer de force. Pour nous rejoindre, vous devrez passer une batterie d'épreuves afin de prouver votre valeur.
+  En attendant la sortie de ces épreuves, nous t'invitons à voir la descriptions des 12 dieux présents au panthéon et de les apprendres par coeur!
 
 zeus_desc: |
   Je suis Zeus, le roi de l’Olympe, le maître incontesté du ciel, de la foudre et du tonnerre. Mon autorité s'étend sur les dieux comme sur les mortels, et lorsque je parle, même les plus puissants se taisent.

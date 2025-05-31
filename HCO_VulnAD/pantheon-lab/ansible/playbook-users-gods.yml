@@ -1,0 +1,67 @@
+---
+- name: Création des utilisateurs dieux sur Linux et WordPress
+  hosts: all
+  #hosts: localhost
+  #connection: local
+  become: yes
+  vars_files:
+    - vars/default.yml
+    - vars/wordpress_vars.yml
+    - vars/gods_img_pass.yml
+    - vars/linux_gods_users.yml
+  tasks:
+    - name: Créer les utilisateurs dieux sur Linux
+      ansible.builtin.shell: |
+        useradd -m -s /bin/bash "{{ item.name | lower | replace('é', 'e') | replace('è', 'e') | replace('ê', 'e') | replace('à', 'a') | replace('â', 'a') | replace('ï', 'i') | replace('î', 'i') | replace('ô', 'o') | replace('ù', 'u') | replace('ç', 'c') | replace(' ', '_') }}"
+        echo "{{ item.name | lower | replace('é', 'e') | replace('è', 'e') | replace('ê', 'e') | replace('à', 'a') | replace('â', 'a') | replace('ï', 'i') | replace('î', 'i') | replace('ô', 'o') | replace('ù', 'u') | replace('ç', 'c') | replace(' ', '_') }}:{{ item.password }}" | chpasswd
+      loop: "{{ linux_users_gods }}"
+      environment:
+        LANG: fr_FR.UTF-8
+        LC_ALL: fr_FR.UTF-8
+
+    - name: Configurer Apache pour l'encodage UTF-8
+      ansible.builtin.copy:
+        src: files/apache2-encoding.conf
+        dest: /etc/apache2/conf-available/encoding.conf
+        mode: '0644'
+      notify: restart apache2
+
+    - name: Activer la configuration d'encodage
+      ansible.builtin.file:
+        src: /etc/apache2/conf-available/encoding.conf
+        dest: /etc/apache2/conf-enabled/encoding.conf
+        state: link
+      notify: restart apache2
+
+    - name: Créer le fichier notes.txt
+      ansible.builtin.template:
+        src: templates/notes.txt.j2
+        dest: /var/www/{{ http_host }}/wordpress/wp-content/notes.txt
+        mode: '0644'
+        owner: www-data
+        group: www-data
+
+    - name: Créer les utilisateurs dieux sur WordPress (admin)
+      become_user: www-data
+      ansible.builtin.shell: |
+        wp user create \
+          "{{ item.name | lower | replace('é', 'e') | replace('è', 'e') | replace('ê', 'e') | replace('à', 'a') | replace('â', 'a') | replace('ï', 'i') | replace('î', 'i') | replace('ô', 'o') | replace('ù', 'u') | replace('ç', 'c') | replace(' ', '_') }}" \
+          "{{ item.name | lower | replace('é', 'e') | replace('è', 'e') | replace('ê', 'e') | replace('à', 'a') | replace('â', 'a') | replace('ï', 'i') | replace('î', 'i') | replace('ô', 'o') | replace('ù', 'u') | replace('ç', 'c') | replace(' ', '_') }}@pantheon.god" \
+          --user_pass="{{ item.password }}" \
+          --role=administrator \
+          --allow-root
+      args:
+        chdir: /var/www/{{ http_host }}/wordpress
+      environment:
+        LANG: fr_FR.UTF-8
+        LC_ALL: fr_FR.UTF-8
+      loop: "{{ wordpress_users_gods }}"
+      ignore_errors: yes
+      tags: [ wp_users ]
+
+  handlers:
+    - name: restart apache2
+      ansible.builtin.service:
+        name: apache2
+        state: restarted
+

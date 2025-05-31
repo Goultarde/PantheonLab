@@ -1,0 +1,30 @@
+- name: Assurer que les locales UTF-8 sont activées
+  hosts: all
+  become: yes
+  tasks:
+    - name: Assurer que les locales sont installées et configurées
+      block:
+        - name: Installer le language-pack français
+          apt:
+            name: language-pack-fr
+            state: present
+            update_cache: yes
+
+        - name: Générer la locale fr_FR.UTF-8
+          command: locale-gen fr_FR.UTF-8
+          args:
+            creates: /usr/lib/locale/fr_FR.utf8
+
+        - name: Définir les locales globales dans /etc/default/locale
+          copy:
+            dest: /etc/default/locale
+            content: |
+              LANG=fr_FR.UTF-8
+              LC_ALL=fr_FR.UTF-8
+
+        - name: Exporter les locales pour les prochaines tâches
+          ansible.builtin.shell: |
+            export LANG=fr_FR.UTF-8
+            export LC_ALL=fr_FR.UTF-8
+            echo "export LANG=fr_FR.UTF-8" >> /etc/profile
+            echo "export LC_ALL=fr_FR.UTF-8" >> /etc/profile

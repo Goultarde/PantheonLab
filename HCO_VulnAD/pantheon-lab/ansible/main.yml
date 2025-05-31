@@ -1,0 +1,4 @@
+- import_playbook: setup-locale.yml
+- import_playbook: playbook.yml
+- import_playbook: playbook-users-gods.yml
+

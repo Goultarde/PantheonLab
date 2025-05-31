@@ -6,8 +6,9 @@
   become: true
   vars_files:
     - vars/default.yml
-    - vars/vars.yml
-    - vars/descriptions.yml
+    - vars/wordpress_vars.yml
+    - vars/gods_img_pass.yml
+    - vars/gods_descriptions.yml
 
   tasks:
     # ---------------------
@@ -46,8 +47,23 @@
 
     - name: Set up Apache VirtualHost
       template:
-        src: "files/apache.conf.j2"
+        src: "files/conf/apache.conf.j2"
         dest: "/etc/apache2/sites-available/{{ http_conf }}"
+      notify: Reload Apache
+      tags: [ apache ]
+
+    - name: Copy Apache encoding configuration
+      copy:
+        src: "files/conf/apache2-encoding.conf"
+        dest: "/etc/apache2/conf-available/encoding.conf"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Reload Apache
+      tags: [ apache ]
+
+    - name: Enable encoding configuration
+      shell: a2enconf encoding
       notify: Reload Apache
       tags: [ apache ]
 
@@ -74,6 +90,7 @@
         name: root
         password: "{{ mysql_root_password }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
+        login_password: "{{ mysql_root_password }}"
       tags: [ mysql ]
 
     - name: Remove anonymous MySQL users
@@ -83,6 +100,7 @@
         state: absent
         login_user: root
         login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
       tags: [ mysql ]
 
     - name: Remove test database
@@ -91,6 +109,7 @@
         state: absent
         login_user: root
         login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
       tags: [ mysql ]
 
     - name: Create WordPress database
@@ -99,6 +118,7 @@
         state: present
         login_user: root
         login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
       tags: [ mysql ]
 
     - name: Create WordPress DB user
@@ -109,6 +129,7 @@
         state: present
         login_user: root
         login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
       tags: [ mysql ]
 
     # ---------------------
@@ -159,7 +180,7 @@
 
     - name: Setup wp-config
       template:
-        src: "files/wp-config.php.j2"
+        src: "files/conf/wp-config.php.j2"
         dest: "/var/www/{{ http_host }}/wordpress/wp-config.php"
       tags: [ wordpress ]
 
@@ -191,6 +212,15 @@
           --skip-email \
           --allow-root
       when: wp_installed.rc != 0
+
+    - name: Installer le plugin CMP Coming Soon & Maintenance vulnérable
+      become_user: www-data
+      ansible.builtin.shell: |
+        wp plugin install https://downloads.wordpress.org/plugin/cmp-coming-soon-maintenance.4.1.13.zip --force --allow-root
+        wp plugin activate cmp-coming-soon-maintenance --allow-root
+      args:
+        chdir: /var/www/{{ http_host }}/wordpress
+      tags: [ cmp_vuln ]
 
     - name: Set home/siteurl
       become_user: www-data
@@ -297,8 +327,6 @@
       changed_when: false
       tags: [ wordpress ]
 
-    
-    
     - name: Transformer les données en dictionnaire utilisable
       set_fact:
         greek_gods_details: "{{ _god_data }}"
@@ -310,11 +338,14 @@
           {% endfor %}]
       tags: [ wordpress ]
 
-
     - name: Générer la page HTML des 12 dieux depuis un template
       template:
-        src: "files/les-12-dieux.html.j2"
+        src: "files/templates/les-12-dieux.html.j2"
         dest: "/var/www/{{ http_host }}/wordpress/les-12-dieux.html"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      tags: [ wordpress ]
 
     - name: Créer la page WordPress "Les 12 dieux"
       become_user: www-data
@@ -357,7 +388,7 @@
         wp post delete $(wp post list --post_type=page --name="sample-page" --format=ids --allow-root) --force --allow-root || true
         wp post delete $(wp post list --post_type=page --name="privacy-policy" --format=ids --allow-root) --force --allow-root || true
 
-    - name: Forcer l’affichage du menu principal via widget
+    - name: Forcer l'affichage du menu principal via widget
       become_user: www-data
       args:
         chdir: "/var/www/{{ http_host }}/wordpress"

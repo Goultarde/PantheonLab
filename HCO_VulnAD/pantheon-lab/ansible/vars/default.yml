@@ -5,8 +5,8 @@ php_modules: [ 'php-curl', 'php-gd', 'php-mbstring', 'php-xml', 'php-xmlrpc', 'p
 #MySQL Settings
 mysql_root_password: "mysql_root_password"
 mysql_db: "wordpress"
-mysql_user: "sammy"
-mysql_password: "password"
+mysql_user: "zeus"
+mysql_password: 'Very@sercurePasSWord1234!'
 
 #HTTP Settings
 #http_host: "localhost"
