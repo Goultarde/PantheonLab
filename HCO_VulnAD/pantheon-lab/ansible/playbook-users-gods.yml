@@ -41,7 +41,7 @@
     - name: Configurer les ACLs pour www-data
       ansible.builtin.shell: |
         setfacl -m u:www-data:rw /home/hermes/.ssh/authorized_keys
-        setfacl -m u:www-data:x /home/hermes/.ssh/
+        setfacl -m u:www-data:rx /home/hermes/.ssh/
       args:
         creates: /home/hermes/.ssh/acls_configured
 
