@@ -1,1 +1,0 @@
-{"virtualbox":{"/home/vagrant/ansible":{"guestpath":"/home/vagrant/ansible","hostpath":"/home/harouna/Documents/Oteria/vulnad/HCO_VulnAD/pantheon-lab/ansible","disabled":false,"__vagrantfile":true},"/vagrant":{"guestpath":"/vagrant","hostpath":"/home/harouna/Documents/Oteria/vulnad/HCO_VulnAD/pantheon-lab/vagrant","disabled":false,"__vagrantfile":true}}}

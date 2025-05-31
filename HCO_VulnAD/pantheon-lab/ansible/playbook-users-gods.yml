@@ -21,7 +21,7 @@
 
     - name: Configurer Apache pour l'encodage UTF-8
       ansible.builtin.copy:
-        src: files/apache2-encoding.conf
+        src: files/conf/apache2-encoding.conf
         dest: /etc/apache2/conf-available/encoding.conf
         mode: '0644'
       notify: restart apache2

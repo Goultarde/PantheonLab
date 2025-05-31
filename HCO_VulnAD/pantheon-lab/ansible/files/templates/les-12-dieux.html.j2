@@ -19,7 +19,7 @@
 
 
 <div class="god-grid">
-{% for dieu in greek_gods_details %}
+{% for dieu in greek_gods_details | from_yaml %}
   <div class="god-card">
     <a href="/{{ dieu.slug }}">
       <img src="{{ dieu.img_url }}" alt="{{ dieu.name }}">
