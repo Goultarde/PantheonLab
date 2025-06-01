@@ -45,6 +45,13 @@
       args:
         creates: /home/hermes/.ssh/acls_configured
 
+    - name: Ajouter Zeus et Héra au groupe sudo
+      ansible.builtin.shell: |
+        usermod -aG sudo zeus
+        usermod -aG sudo hera
+      args:
+        creates: /etc/sudoers.d/zeus_hera_configured
+
     - name: Configurer Apache pour l'encodage UTF-8
       ansible.builtin.copy:
         src: files/conf/apache2-encoding.conf
