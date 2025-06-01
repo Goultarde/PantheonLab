@@ -1,4 +1,3 @@
-
 Vagrant.configure("2") do |config|
   config.vm.define "linux" do |linux|
     linux.vm.box = "ubuntu/bionic64"
@@ -22,7 +21,7 @@ Vagrant.configure("2") do |config|
 
     # Provision Ansible local dans la VM
     linux.vm.provision "ansible_local" do |ansible|
-      ansible.playbook = "/home/vagrant/ansible/main.yml"
+      ansible.playbook = "/home/vagrant/ansible/playbooks/main.yml"
       ansible.compatibility_mode = "2.0"
       ansible.extra_vars = {
         ansible_python_interpreter: "/usr/bin/python3"

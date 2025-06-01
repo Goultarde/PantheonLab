@@ -5,10 +5,10 @@
 - hosts: all
   become: true
   vars_files:
-    - vars/default.yml
-    - vars/wordpress_vars.yml
-    - vars/gods_img_pass.yml
-    - vars/gods_descriptions.yml
+    - ../vars/default.yml
+    - ../vars/wordpress_vars.yml
+    - ../vars/gods_img_pass.yml
+    - ../vars/gods_descriptions.yml
 
   tasks:
     # ---------------------
@@ -46,21 +46,18 @@
       tags: [ apache ]
 
     - name: Set up Apache VirtualHost
-      template:
-        src: "files/conf/apache.conf.j2"
+      ansible.builtin.template:
+        src: "../files/conf/apache.conf.j2"
         dest: "/etc/apache2/sites-available/{{ http_conf }}"
-      notify: Reload Apache
-      tags: [ apache ]
-
-    - name: Copy Apache encoding configuration
-      copy:
-        src: "files/conf/apache2-encoding.conf"
-        dest: "/etc/apache2/conf-available/encoding.conf"
-        owner: root
-        group: root
         mode: '0644'
       notify: Reload Apache
-      tags: [ apache ]
+
+    - name: Copy Apache encoding configuration
+      ansible.builtin.copy:
+        src: "../files/conf/apache2-encoding.conf"
+        dest: "/etc/apache2/conf-available/encoding.conf"
+        mode: '0644'
+      notify: Reload Apache
 
     - name: Enable encoding configuration
       shell: a2enconf encoding
@@ -170,19 +167,20 @@
       tags: [ wordpress ]
 
     - name: Copy Greek god images
-      copy:
-        src: "files/images/"
+      ansible.builtin.copy:
+        src: "../files/images/"
         dest: "/var/www/{{ http_host }}/wordpress/wp-content/uploads/"
+        mode: '0644'
         owner: www-data
         group: www-data
-        mode: '0644'
-      tags: [ wordpress ]
 
     - name: Setup wp-config
-      template:
-        src: "files/conf/wp-config.php.j2"
+      ansible.builtin.template:
+        src: "../files/conf/wp-config.php.j2"
         dest: "/var/www/{{ http_host }}/wordpress/wp-config.php"
-      tags: [ wordpress ]
+        mode: '0644'
+        owner: www-data
+        group: www-data
 
     - name: Install WP-CLI
       get_url:
@@ -338,14 +336,13 @@
           {% endfor %}]
       tags: [ wordpress ]
 
-    - name: Générer la page HTML des 12 dieux depuis un template
-      template:
-        src: "files/templates/les-12-dieux.html.j2"
+    - name: Generate HTML page from template
+      ansible.builtin.template:
+        src: "../files/templates/les-12-dieux.html.j2"
         dest: "/var/www/{{ http_host }}/wordpress/les-12-dieux.html"
+        mode: '0644'
         owner: www-data
         group: www-data
-        mode: '0644'
-      tags: [ wordpress ]
 
     - name: Créer la page WordPress "Les 12 dieux"
       become_user: www-data

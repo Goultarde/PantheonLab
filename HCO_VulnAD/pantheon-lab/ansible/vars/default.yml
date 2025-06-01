@@ -14,3 +14,5 @@ http_host: "pantheon.god"
 http_conf: "pantheon_wordpress.conf"
 http_port: "80"
 
+ad_safe_mode_password: "Pantheon@2024"
+

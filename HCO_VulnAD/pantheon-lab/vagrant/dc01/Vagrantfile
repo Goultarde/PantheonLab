@@ -1,0 +1,30 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.define "dc01" do |dc01|
+    dc01.vm.box = "StefanScherer/windows_2019"
+    dc01.vm.hostname = "dc01"
+    
+    # Configuration réseau
+    dc01.vm.network "private_network", ip: "192.168.56.11"
+    
+    # Configuration de la VM
+    dc01.vm.provider "virtualbox" do |vb|
+      vb.memory = "4096"
+      vb.cpus = 2
+      vb.name = "DC01"
+    end
+
+    # Configuration WinRM plus permissive
+    dc01.vm.communicator = "winrm"
+    dc01.winrm.username = "vagrant"
+    dc01.winrm.password = "vagrant"
+    dc01.winrm.transport = :plaintext
+    dc01.winrm.basic_auth_only = true
+    dc01.winrm.ssl_peer_verification = false
+    dc01.winrm.timeout = 300
+    dc01.winrm.retry_limit = 10
+    dc01.winrm.retry_delay = 10
+  end
+end 

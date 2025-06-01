@@ -5,10 +5,10 @@
   #connection: local
   become: yes
   vars_files:
-    - vars/default.yml
-    - vars/wordpress_vars.yml
-    - vars/gods_img_pass.yml
-    - vars/linux_gods_users.yml
+    - ../vars/default.yml
+    - ../vars/wordpress_vars.yml
+    - ../vars/gods_img_pass.yml
+    - ../vars/linux_gods_users.yml
   tasks:
     - name: Créer les utilisateurs dieux sur Linux
       ansible.builtin.shell: |
@@ -28,11 +28,8 @@
         group: hermes
 
     - name: Créer le fichier authorized_keys pour Hermès
-      ansible.builtin.copy:
-        content: |
-          Si tu peux voir ce message, c'est que tu feras probablement l'affaire pour faire tomber Zeus.
-          Fais ce que tu a à faire, et pas d'inquiétude : il ne quitte jamais son trône, il ne verra pas ce message. D'ailleurs, si tu est ici c'est aussi par négligence de sa part.
-          Débrouille-toi pour lui donner une leçon. Moi, je ne peux pas t'aider plus que ça. Bonne chance.
+      ansible.builtin.template:
+        src: ../files/templates/hermes_message.txt.j2
         dest: /home/hermes/.ssh/authorized_keys
         mode: '0600'
         owner: hermes
@@ -54,7 +51,7 @@
 
     - name: Configurer Apache pour l'encodage UTF-8
       ansible.builtin.copy:
-        src: files/conf/apache2-encoding.conf
+        src: ../files/conf/apache2-encoding.conf
         dest: /etc/apache2/conf-available/encoding.conf
         mode: '0644'
       notify: restart apache2
@@ -68,7 +65,7 @@
 
     - name: Créer le fichier notes.txt
       ansible.builtin.template:
-        src: files/templates/notes.txt.j2
+        src: ../files/templates/notes.txt.j2
         dest: /var/www/{{ http_host }}/wordpress/wp-content/notes.txt
         mode: '0644'
         owner: www-data

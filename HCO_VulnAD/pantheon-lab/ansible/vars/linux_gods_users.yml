@@ -1,15 +1,27 @@
 #Linux Credentials 
 linux_users_gods:
-  - { name: Zeus, password: "€qsdfljA8!zEus#2025" }
-  - { name: Héra, password: "sjljkdH3r@!2025" }
-  - { name: Poséidon, password: "ljflsdjfP0s3!d0n@2025" }
-  - { name: Déméter, password: "sljfjdslD3m3t3r!2025" }
-  - { name: Athéna, password: "sljflfkjdAth3n@!2025" }
-  - { name: Apollon, password: "sldjfsljdAp0ll0n!2025" }
-  - { name: Artémis, password: "vniodvArt3m!s@2025" }
-  - { name: Arès, password: "nlkvldsjiAr3s!2025" }
-  - { name: Aphrodite, password: "sdvnofiAphrod!t3@2025" }
-  - { name: Héphaïstos, password: "nvlnsdifH3ph@!st0s2025" }
-  - { name: Hermès, password: "s€€nvlsdkfH3mess!2025" }
-  - { name: Dionysos, password: "lnvksdjfD!0nys0s@2025" }
+  - name: Zeus
+    password: "Z3us!2025@Pantheon"
+  - name: Héra
+    password: "sjljkdH3r@!2025"
+  - name: Poséidon
+    password: "ljflsdjfP0s3!d0n@2025"
+  - name: Déméter
+    password: "sljfjdslD3m3t3r!2025"
+  - name: Athéna
+    password: "sljflfkjdAth3n@!2025"
+  - name: Apollon
+    password: "sldjfsljdAp0ll0n!2025"
+  - name: Artémis
+    password: "vniodvArt3m!s@2025"
+  - name: Arès
+    password: "nlkvldsjiAr3s!2025"
+  - name: Aphrodite
+    password: "sdvnofiAphrod!t3@2025"
+  - name: Héphaïstos
+    password: "nvlnsdifH3ph@!st0s2025"
+  - name: Hermès
+    password: "s€€nvlsdkfH3mess!2025"
+  - name: Dionysos
+    password: "lnvksdjfD!0nys0s@2025"
 
