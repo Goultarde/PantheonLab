@@ -1,6 +1,6 @@
 ---
-- name: Configuration du DC01
-  hosts: dc01
+- name: Configuration du DC02
+  hosts: dc02
   gather_facts: true
   vars_files:
     - ../vars/default.yml
@@ -9,7 +9,7 @@
   tasks:
     - name: Installer les rôles AD-Domain-Services et DNS
       win_feature:
-        name: 
+        name:
           - AD-Domain-Services
           - DNS
         include_management_tools: yes
@@ -24,30 +24,23 @@
 
     - name: Configurer le DNS local
       win_shell: |
-        Set-DnsClientServerAddress -InterfaceAlias "Ethernet 2" -ServerAddresses "127.0.0.1"
+        Set-DnsClientServerAddress -InterfaceAlias "Ethernet 2" -ServerAddresses "192.168.56.11"
         if (-not (Get-DnsServerZone -Name "pantheon.god" -ErrorAction SilentlyContinue)) {
           Add-DnsServerPrimaryZone -Name "pantheon.god" -ZoneFile "pantheon.god.dns" -DynamicUpdate None
         }
         if (-not (Get-DnsServerResourceRecord -ZoneName "pantheon.god" -Name "@" -ErrorAction SilentlyContinue)) {
-          Add-DnsServerResourceRecordA -Name "@" -ZoneName "pantheon.god" -IPv4Address "192.168.56.11"
+          Add-DnsServerResourceRecordA -Name "@" -ZoneName "pantheon.god" -IPv4Address "192.168.56.12"
         }
       register: dns_config
 
-    - name: Créer l'enregistrement DNS pour dc01
+    - name: Créer l'enregistrement DNS pour dc02
       win_shell: |
         $zoneName = "pantheon.god"
-        $recordName = "dc01"
-        $ipAddress = "192.168.56.11"
-        
-        # Vérifier si l'enregistrement existe déjà
+        $recordName = "dc02"
+        $ipAddress = "192.168.56.12"
         $existingRecord = Get-DnsServerResourceRecord -ZoneName $zoneName -Name $recordName -ErrorAction SilentlyContinue
-        
         if (-not $existingRecord) {
-            # Créer l'enregistrement A
             Add-DnsServerResourceRecordA -Name $recordName -ZoneName $zoneName -IPv4Address $ipAddress -CreatePtr
-            Write-Host "Enregistrement DNS créé pour $recordName.$zoneName"
-        } else {
-            Write-Host "L'enregistrement DNS existe déjà pour $recordName.$zoneName"
         }
       register: dns_record
 
@@ -55,19 +48,6 @@
       win_file:
         path: C:\Windows\NTDS
         state: directory
-
-    - name: Créer le domaine
-      win_domain:
-        domain_netbios_name: PANTHEON
-        dns_domain_name: pantheon.god
-        safe_mode_password: "{{ ad_safe_mode_password }}"
-      register: check_domain
-
-    - name: Redémarrer après création du domaine
-      win_reboot:
-        reboot_timeout: 900
-        post_reboot_delay: 300
-      when: check_domain.changed
 
     - name: Promouvoir le serveur en contrôleur de domaine
       win_domain_controller:
@@ -100,28 +80,26 @@
           - Administrator
         state: present
 
-    - name: Créer les utilisateurs dieux dans l'AD
-      win_domain_user:
-        name: "{{ item.name | lower | replace('é', 'e') | replace('è', 'e') | replace('ê', 'e') | replace('à', 'a') | replace('â', 'a') | replace('ï', 'i') | replace('î', 'i') | replace('ô', 'o') | replace('ù', 'u') | replace('ç', 'c') | replace(' ', '_') }}"
-        password: "{{ item.password }}"
+    # --- ADCS ---
+    - name: Installer le rôle ADCS
+      win_feature:
+        name: AD-Certificate
+        include_management_tools: yes
         state: present
-        groups:
-          - Domain Users
-        attributes:
-          description: "{{ item.name }} - Dieu de l'Olympe"
-      loop: "{{ linux_users_gods }}"
+      register: adcs_install
 
-    - name: Ajouter Zeus au groupe Enterprise Admins
-      win_domain_group_membership:
-        name: "Enterprise Admins"
-        members:
-          - zeus
-        state: present
+    - name: Configurer ADCS
+      win_shell: |
+        Install-AdcsCertificationAuthority -CAType EnterpriseRootCA -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 2048 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 5 -DatabaseDirectory "C:\Windows\System32\CertLog" -LogDirectory "C:\Windows\System32\CertLog" -Force
+      when: adcs_install.changed
 
-    - name: Ajouter Zeus au groupe Domain Admins
-      win_domain_group_membership:
-        name: "Domain Admins"
-        members: ["Administrator", "zeus"]
-        state: present
+    - name: Installer le module PSPKI
+      win_shell: |
+        Install-Module PSPKI -Force
 
-    # Fin du playbook 
+    - name: Configurer les permissions sur le CA
+      win_shell: |
+        Import-Module PSPKI
+        $caHostname = Get-CertificationAuthority | Select-Object -ExpandProperty ComputerName
+        Get-CertificationAuthority "$caHostname" | Get-CertificationAuthorityAcl | Add-CertificationAuthorityAcl -Identity "pantheon.god\Administrator" -AccessType "Allow" -AccessMask "ManageCa" | Set-CertificationAuthorityAcl -RestartCA
+      register: ca_permissions 

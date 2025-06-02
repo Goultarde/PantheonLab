@@ -1,0 +1,107 @@
+---
+- name: Configuration des groupes et utilisateurs de l'Olympe
+  hosts: dc01
+  gather_facts: true
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: plaintext
+    ansible_winrm_server_cert_validation: ignore
+    ansible_user: Administrator
+    ansible_password: Pantheon@2024
+  tasks:
+    - name: Créer l'OU OLYMPIENS
+      win_shell: |
+        if (-not (Get-ADOrganizationalUnit -Filter "Name -eq 'OLYMPIENS'" -ErrorAction SilentlyContinue)) {
+          New-ADOrganizationalUnit -Name "OLYMPIENS" -Path "DC=pantheon,DC=god" -Description "Organisation des Olympiens"
+        }
+      register: ou_creation
+
+    - name: Créer le groupe OLYMPE-HEROS
+      win_shell: |
+        if (-not (Get-ADGroup -Filter "Name -eq 'OLYMPE-HEROS'" -ErrorAction SilentlyContinue)) {
+          New-ADGroup -Name "OLYMPE-HEROS" -GroupScope Global -GroupCategory Security -Path "OU=OLYMPIENS,DC=pantheon,DC=god" -Description "Groupe des héros de l'Olympe"
+        }
+      register: group_heroes
+
+    - name: Créer le groupe OLYMPE-IMORTAL-HEROS
+      win_shell: |
+        if (-not (Get-ADGroup -Filter "Name -eq 'OLYMPE-IMORTAL-HEROS'" -ErrorAction SilentlyContinue)) {
+          New-ADGroup -Name "OLYMPE-IMORTAL-HEROS" -GroupScope Global -GroupCategory Security -Path "OU=OLYMPIENS,DC=pantheon,DC=god" -Description "Groupe des héros immortels de l'Olympe"
+        }
+      register: group_immortal_heroes
+
+    - name: Créer la KDS Root Key
+      win_shell: |
+        $effectiveTime = (Get-Date).AddHours(-10)
+        Add-KdsRootKey -EffectiveTime $effectiveTime
+      register: kds_key
+
+    - name: Créer le compte gMSA pour Athena
+      win_shell: |
+        $groupDN = (Get-ADGroup -Identity "OLYMPE-IMORTAL-HEROS").DistinguishedName
+        if (-not (Get-ADServiceAccount -Filter "Name -eq 'svc_athena_gmsa'" -ErrorAction SilentlyContinue)) {
+          New-ADServiceAccount -Name "svc_athena_gmsa" `
+            -Path "OU=OLYMPIENS,DC=pantheon,DC=god" `
+            -PrincipalsAllowedToRetrieveManagedPassword $groupDN `
+            -DNSHostName "dc01.pantheon.god" `
+            -Enabled $true
+        }
+      register: gmsa_creation
+
+    - name: Créer les utilisateurs du groupe OLYMPE-HEROS
+      win_shell: |
+        $users = @(
+          @{name='achille'; password='Ach!ll3@2025'; description='Fils de Thétis (nymphe) et de Pélée (mortel).'},
+          @{name='these'; password='Th3s3e@2025'; description='Thésée'},
+          @{name='persee'; password='P3rs33@2025'; description='Persée'},
+          @{name='ulysse'; password='Ulyss3@2025'; description='Ulysse'},
+          @{name='jason'; password='J@s0n2025'; description='Jason'},
+          @{name='orphee'; password='0rph33@2025'; description='Orphée'}
+        )
+        
+        foreach ($user in $users) {
+          if (-not (Get-ADUser -Filter "Name -eq '$($user.name)'" -ErrorAction SilentlyContinue)) {
+            $securePassword = ConvertTo-SecureString $user.password -AsPlainText -Force
+            New-ADUser -Name $user.name `
+              -Path "OU=OLYMPIENS,DC=pantheon,DC=god" `
+              -AccountPassword $securePassword `
+              -Description $user.description `
+              -Enabled $true
+            Add-ADGroupMember -Identity "OLYMPE-HEROS" -Members $user.name
+          }
+        }
+      register: users_heroes
+
+    - name: Créer les utilisateurs du groupe OLYMPE-IMORTAL-HEROS
+      win_shell: |
+        $users = @(
+          @{name='hercule'; password='H3rcul3@2025'; description='Fils de Zeus et d''Alcmène'},
+          @{name='asclepios'; password='Ascl3p!0s@2025'; description='Fils d''Apollon et de Coronis'},
+          @{name='psyche'; password='Psych3@2025'; description='Mortelle, épouse d''Éros/cupidon'},
+          @{name='ganymede'; password='G@nym3d3@2025'; description='Prince troyen d''une grande beauté.'}
+        )
+        
+        foreach ($user in $users) {
+          if (-not (Get-ADUser -Filter "Name -eq '$($user.name)'" -ErrorAction SilentlyContinue)) {
+            $securePassword = ConvertTo-SecureString $user.password -AsPlainText -Force
+            New-ADUser -Name $user.name `
+              -Path "OU=OLYMPIENS,DC=pantheon,DC=god" `
+              -AccountPassword $securePassword `
+              -Description $user.description `
+              -Enabled $true
+            Add-ADGroupMember -Identity "OLYMPE-IMORTAL-HEROS" -Members $user.name
+          }
+        }
+      register: users_immortal_heroes
+
+    - name: Configurer les permissions Generic Write sur OLYMPE-HEROS
+      win_shell: |
+        $groupDN = (Get-ADGroup -Identity "OLYMPE-HEROS").DistinguishedName
+        $acl = Get-Acl "AD:$groupDN"
+        $identity = (Get-ADGroup -Identity "OLYMPE-IMORTAL-HEROS").SID
+        $adRights = [System.DirectoryServices.ActiveDirectoryRights]"GenericWrite"
+        $type = [System.Security.AccessControl.AccessControlType]"Allow"
+        $rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($identity, $adRights, $type)
+        $acl.AddAccessRule($rule)
+        Set-Acl -AclObject $acl -Path "AD:$groupDN"
+      register: acl_setup 
