@@ -1,0 +1,99 @@
+---
+- import_playbook: config.yml
+
+- name: Configuration des groupes et utilisateurs de l'Olympe
+  hosts: pantheon-dc01
+  gather_facts: true
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: plaintext
+    ansible_winrm_server_cert_validation: ignore
+    ansible_user: Administrator
+    ansible_password: "{{ lab.hosts.dc01.local_admin_password }}"
+    hostname: "{{ lab.hosts.dc01.hostname }}"
+    domain: "{{ lab.hosts.dc01.domain }}"
+    domain_username: "{{ domain }}\\Administrator"
+    domain_password: "{{ lab.hosts.dc01.local_admin_password }}"
+    domain_server: "{{ lab.hosts.dc01.hostname }}.{{ domain }}"
+    ad_users: "{{ lab.domains[lab.hosts.dc01.domain].users }}"
+    ad_ou: "{{ lab.domains[lab.hosts.dc01.domain].organisation_units }}"
+    ad_groups: "{{ lab.domains[lab.hosts.dc01.domain].groups }}"
+
+  tasks:
+    - name: Créer l'OU OLYMPIENS
+      win_shell: |
+        if (-not (Get-ADOrganizationalUnit -Filter "Name -eq 'OLYMPIENS'" -ErrorAction SilentlyContinue)) {
+          New-ADOrganizationalUnit -Name "OLYMPIENS" -Path "{{ lab.hosts.dc01.path }}" -Description "Organisation des Olympiens"
+        }
+      register: ou_creation
+
+    - name: Créer les groupes dans l'OU OLYMPIENS
+      win_shell: |
+        $groups = @{
+          'OLYMPE-HEROS' = 'Groupe des héros de l''Olympe'
+          'OLYMPE-IMORTAL-HEROS' = 'Groupe des héros immortels de l''Olympe'
+          'OLYMPE-GODS' = 'Groupe des dieux de l''Olympe'
+        }
+        
+        foreach ($group in $groups.GetEnumerator()) {
+          if (-not (Get-ADGroup -Filter "Name -eq '$($group.Key)'" -ErrorAction SilentlyContinue)) {
+            New-ADGroup -Name $group.Key `
+              -GroupScope Global `
+              -GroupCategory Security `
+              -Path "OU=OLYMPIENS,{{ lab.hosts.dc01.path }}" `
+              -Description $group.Value
+          }
+        }
+      register: groups_creation
+
+    - name: Créer la KDS Root Key
+      win_shell: |
+        $effectiveTime = (Get-Date).AddHours(-10)
+        Add-KdsRootKey -EffectiveTime $effectiveTime
+      register: kds_key
+
+    - name: Créer le compte gMSA pour Athena
+      win_shell: |
+        $groupDN = (Get-ADGroup -Identity "{{ lab.domains[lab.hosts.dc01.domain].gmsa.svc_athena_gmsa.PrincipalsAllowedToRetrieveManagedPassword[0] }}").DistinguishedName
+        $spns = @("HTTP/athena", "HTTP/athena.pantheon.god")
+        if (-not (Get-ADServiceAccount -Filter "Name -eq '{{ lab.domains[lab.hosts.dc01.domain].gmsa.svc_athena_gmsa.gMSA_Name }}'" -ErrorAction SilentlyContinue)) {
+          New-ADServiceAccount -Name "{{ lab.domains[lab.hosts.dc01.domain].gmsa.svc_athena_gmsa.gMSA_Name }}" `
+            -Path "OU=OLYMPIENS,{{ lab.hosts.dc01.path }}" `
+            -PrincipalsAllowedToRetrieveManagedPassword $groupDN `
+            -DNSHostName "{{ lab.domains[lab.hosts.dc01.domain].gmsa.svc_athena_gmsa.gMSA_FQDN }}" `
+            -ServicePrincipalNames $spns `
+            -Enabled $true
+        }
+      register: gmsa_creation
+
+    - name: Créer les utilisateurs du domaine
+      microsoft.ad.user:
+        name: "{{ item.key }}"
+        firstname: "{{ item.value.firstname }}"
+        surname: "{{ item.value.surname }}"
+        password: "{{ item.value.password }}"
+        password_never_expires: yes
+        state: present
+        path: "{{ item.value.path }}"
+        description: "{{ item.value.description }}"
+        groups:
+          set: "{{ item.value.groups }}"
+        domain_username: "{{ domain_username }}"
+        domain_password: "{{ domain_password }}"
+        domain_server: "{{ domain_server }}"
+      with_dict: "{{ ad_users }}"
+      register: users_creation
+
+    - name: Configurer les ACLs
+      win_shell: |
+        {% for acl_name, acl in lab.domains[lab.hosts.dc01.domain].acls.items() %}
+        $groupDN = (Get-ADGroup -Identity "{{ acl.to }}").DistinguishedName
+        $acl = Get-Acl "AD:$groupDN"
+        $identity = (Get-ADGroup -Identity "{{ acl.for }}").SID
+        $adRights = [System.DirectoryServices.ActiveDirectoryRights]"{{ acl.right }}"
+        $type = [System.Security.AccessControl.AccessControlType]"Allow"
+        $rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($identity, $adRights, $type)
+        $acl.AddAccessRule($rule)
+        Set-Acl -AclObject $acl -Path "AD:$groupDN"
+        {% endfor %}
+      register: acl_setup 

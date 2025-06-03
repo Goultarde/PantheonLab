@@ -1,41 +1,117 @@
 ---
-- name: Configuration du certificat LDAPS sur DC
-  hosts: dc01
+- import_playbook: config.yml
+
+- name: Configuration du DC02
+  hosts: dc02
   gather_facts: true
-  vars:
-    ansible_connection: winrm
-    ansible_winrm_transport: plaintext
-    ansible_winrm_server_cert_validation: ignore
-    ansible_user: Administrator
-    ansible_password: Pantheon@2024
-    cert_template_name: "LDAPS-Web-Server"   # Nom du template publié sur la CA
-    ca_server_ip: "192.168.56.12"             # IP du serveur ADCS
-    fqdn_dc: "dc01.pantheon.god"              # FQDN complet du contrôleur de domaine
-
+  
   tasks:
-    - name: Installer certificat LDAPS sur DC
+    - name: Configurer le DNS pour pointer vers DC01
       win_shell: |
-        $cert = Get-Certificate -Template "{{ cert_template_name }}" -CertStoreLocation Cert:\LocalMachine\My -DnsName "{{ fqdn_dc }}" -Url "http://{{ ca_server_ip }}/certsrv"
-        if ($cert) {
-          Write-Output "Certificat demandé et installé avec succès"
-        } else {
-          Write-Error "La demande de certificat a échoué"
-        }
-      register: cert_request
-      ignore_errors: no
+        Set-DnsClientServerAddress -InterfaceAlias "Ethernet 2" -ServerAddresses "192.168.56.11"
+      # Ajouter un délai pour s'assurer que le DNS est pris en compte
+    - name: Attendre que le DNS soit effectif
+      ansible.builtin.pause:
+        seconds: 10
 
-    - name: Vérifier que le certificat est bien installé dans le magasin personnel
+    - name: Vérifier si déjà joint au domaine
       win_shell: |
-        $certs = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*{{ fqdn_dc }}*" }
-        if ($certs) {
-          Write-Output "Certificat LDAPS présent"
+        $domain = (Get-ComputerInfo).CsDomain
+        if ($domain -eq "{{ lab.hosts[server_type].domain }}") {
+          Write-Host "Déjà joint au domaine {{ lab.hosts[server_type].domain }}"
           exit 0
         } else {
-          Write-Error "Certificat LDAPS absent"
+          Write-Host "Pas encore joint au domaine"
           exit 1
         }
-      register: cert_check
+      register: domain_check
+      ignore_errors: yes # Ignorer l'échec si non joint, ce qui est l'état attendu pour continuer
 
-    - name: Afficher résultat certificat
-      debug:
-        msg: "{{ cert_check.stdout }}" 
+    - name: Joindre le domaine
+      win_domain_membership:
+        dns_domain_name: "{{ lab.hosts[server_type].domain }}"
+        domain_admin_user: "{{ lab.hosts[server_type].domain_admin_user }}"
+        domain_admin_password: "{{ lab.hosts[server_type].domain_admin_password }}"
+        state: domain
+      register: domain_join
+      when: domain_check.rc != 0 # Exécuter uniquement si la vérification a échoué (pas joint)
+
+    - name: Redémarrer après jointure au domaine
+      win_reboot:
+        reboot_timeout: 900
+        post_reboot_delay: 100
+      when: domain_join.changed
+
+    # --- ADCS Root CA Configuration ---
+    - name: Vérifier si une CA est déjà installée
+      win_shell: |
+        try {
+          $ca = Get-CertificationAuthority -ErrorAction Stop
+          Write-Host "CA déjà installée: $($ca.DisplayName)"
+          exit 0
+        } catch {
+          Write-Host "Aucune CA installée"
+          exit 1
+        }
+      register: ca_check
+      ignore_errors: yes # Ignorer l'échec si aucune CA n'est installée
+
+    - name: Vérifier si déjà Autorité de Certification racine d'entreprise
+      win_shell: |
+        try {
+          $ca = Get-CertificationAuthority -ErrorAction Stop
+          if ($ca.CAType -eq 'EnterpriseRootCA') {
+            Write-Host "Déjà Autorité de Certification racine d'entreprise"
+            exit 0
+          } else {
+            Write-Host "CA installée mais pas de type EnterpriseRootCA"
+            exit 1
+          }
+        } catch {
+           Write-Host "Aucune CA installée (vérification de type ignorée)"
+           exit 1 # Aucune CA, donc pas une EnterpriseRootCA
+        }
+      register: ca_type_check
+      ignore_errors: yes # Ignorer l'échec si pas de CA ou pas le bon type
+      when: ca_check.rc == 0 # Exécuter uniquement si une CA est installée
+
+    - name: Installer le rôle ADCS (Root CA)
+      win_feature:
+        name:
+          - AD-Certificate
+          - ADCS-Web-Enrollment
+        include_management_tools: yes
+        state: present
+      register: adcs_install_root
+      when: ca_check.rc != 0 or ca_type_check.rc != 0 # Exécuter si aucune CA OU si la CA n'est pas de type EnterpriseRootCA
+
+    - name: Configurer ADCS en tant qu'autorité de certification racine d'entreprise
+      win_shell: |
+        Install-AdcsCertificationAuthority `
+          -CAType EnterpriseRootCA `
+          -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" `
+          -KeyLength 2048 `
+          -HashAlgorithmName SHA256 `
+          -CACommonName "{{ lab.domains[domain].netbios_name }}-CA" `
+          -ValidityPeriod Years `
+          -ValidityPeriodUnits 10 `
+          -DatabaseDirectory "C:\\Windows\\System32\\CertLog" `
+          -LogDirectory "C:\\Windows\\System32\\CertLog" `
+          -Force
+      when: ca_check.rc != 0 or ca_type_check.rc != 0 # Exécuter si aucune CA OU si la CA n'est pas de type EnterpriseRootCA
+
+    - name: Installer le fournisseur NuGet
+      win_shell: |
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+
+    - name: Installer le module PSPKI
+      win_shell: |
+        Install-Module PSPKI -Force
+
+    - name: Configurer les permissions sur le CA
+      win_shell: |
+        Import-Module PSPKI
+        $caHostname = Get-CertificationAuthority | Select-Object -ExpandProperty ComputerName
+        Get-CertificationAuthority "$caHostname" | Get-CertificationAuthorityAcl | Add-CertificationAuthorityAcl -Identity "{{ lab.hosts[server_type].domain }}\Administrator" -AccessType "Allow" -AccessMask "ManageCa" | Set-CertificationAuthorityAcl -RestartCA
+      register: ca_permissions
+

@@ -1,49 +1,21 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "StefanScherer/windows_2019"
   config.vm.box_version = "2021.05.15"
-  config.vm.hostname = "dc01"
+  config.vm.define "pantheon-dc01"
   config.vm.network "private_network", ip: "192.168.56.11"
   config.vm.provider "virtualbox" do |vb|
     vb.memory = "4096"
     vb.cpus = 2
-    vb.name = "dc01"
+    vb.name = "pantheon-dc01"
   end
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "../../ansible/playbooks/dc01.yml"
+    ansible.playbook = "../../ansible/playbooks/initial_setup.yml"
     ansible.inventory_path = "../../ansible/inventory/hosts.yml"
-    ansible.limit = "dc01"
     ansible.extra_vars = {
-      ansible_connection: "winrm",
-      ansible_winrm_transport: "plaintext",
       ansible_winrm_server_cert_validation: "ignore",
-      ansible_user: "vagrant",
-      ansible_password: "vagrant"
-    }
-  end
-
-  config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "../../ansible/playbooks/olympe-config.yml"
-    ansible.inventory_path = "../../ansible/inventory/hosts.yml"
-    ansible.limit = "dc01"
-    ansible.extra_vars = {
-      ansible_connection: "winrm",
-      ansible_winrm_transport: "plaintext",
-      ansible_winrm_server_cert_validation: "ignore",
-      ansible_user: "Administrator",
-      ansible_password: "Pantheon@2024"
-    }
-  end
-
-  config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "../../ansible/playbooks/adcs.yml"
-    ansible.inventory_path = "../../ansible/inventory/hosts.yml"
-    ansible.limit = "dc01"
-    ansible.extra_vars = {
-      ansible_connection: "winrm",
-      ansible_winrm_transport: "plaintext",
-      ansible_winrm_server_cert_validation: "ignore",
-      ansible_user: "Administrator",
-      ansible_password: "Pantheon@2024"
+      target_host: "pantheon-dc01",
+      server_type: "dc01",
+      data_path: "../../ansible/vars"
     }
   end
 end 

@@ -1,27 +1,20 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
-
 Vagrant.configure("2") do |config|
   config.vm.box = "StefanScherer/windows_2019"
   config.vm.box_version = "2021.05.15"
-  config.vm.hostname = "dc02"
+  config.vm.define "pantheon-dc02"
   config.vm.network "private_network", ip: "192.168.56.12"
   config.vm.provider "virtualbox" do |vb|
     vb.memory = "4096"
     vb.cpus = 2
-    vb.name = "dc02"
+    vb.name = "pantheon-dc02"
   end
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "../../ansible/playbooks/dc02.yml"
+    ansible.playbook = "../../ansible/playbooks/initial_setup.yml"
     ansible.inventory_path = "../../ansible/inventory/hosts.yml"
-    ansible.limit = "dc02"
     ansible.extra_vars = {
-      ansible_connection: "winrm",
-      ansible_winrm_transport: "plaintext",
       ansible_winrm_server_cert_validation: "ignore",
-      ansible_user: "vagrant",
-      ansible_password: "vagrant",
-      ansible_winrm_port: 5985
+      target_host: "pantheon-dc02",
+      server_type: "dc02"
     }
   end
 end 

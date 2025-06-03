@@ -1,0 +1,71 @@
+---
+- import_playbook: config.yml
+
+
+- name: Configuration AD DS
+  hosts: pantheon-dc01
+  gather_facts: true
+
+  tasks:
+    - name: Configurer le DNS
+      win_dns_client:
+        adapter_name: Ethernet
+        ip_addresses: "192.168.56.11"
+        dns_servers: "192.168.56.11"
+
+    - name: Créer le dossier NTDS
+      win_file:
+        path: C:\Windows\NTDS
+        state: directory
+
+    - name: Créer le domaine
+      microsoft.ad.domain:
+        dns_domain_name: "{{ lab.hosts[server_type].domain }}"
+        safe_mode_password: "{{ lab.hosts[server_type].local_admin_password }}"
+        database_path: C:\Windows\NTDS
+        sysvol_path: C:\Windows\SYSVOL
+        domain_netbios_name: "{{ lab.hosts[server_type].domain.split('.')[0] | upper }}"
+        forest_mode: WinThreshold
+        domain_mode: WinThreshold
+        install_dns: yes
+        create_dns_delegation: no
+        reboot: yes
+        reboot_timeout: 900
+      register: check_domain
+
+    - name: Redémarrer après création du domaine
+      win_reboot:
+        reboot_timeout: 900
+        post_reboot_delay: 300
+      when: check_domain.changed
+
+    - name: Promouvoir le serveur en contrôleur de domaine
+      microsoft.ad.domain_controller:
+        dns_domain_name: "{{ lab.hosts[server_type].domain }}"
+        safe_mode_password: "{{ lab.hosts[server_type].local_admin_password }}"
+        database_path: C:\Windows\NTDS
+        sysvol_path: C:\Windows\SYSVOL
+        state: domain_controller
+        domain_admin_user: .\Administrator
+        domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
+      register: check_domain_controller
+
+    - name: Redémarrer après promotion en contrôleur de domaine
+      win_reboot:
+        reboot_timeout: 900
+        post_reboot_delay: 100
+      when: check_domain_controller.changed
+
+    - name: S'assurer que l'administrateur est dans le groupe Enterprise Admins
+      community.windows.win_domain_group_membership:
+        name: "Enterprise Admins"
+        members:
+          - Administrator
+        state: present
+
+    - name: S'assurer que l'administrateur est dans le groupe Domain Admins
+      community.windows.win_domain_group_membership:
+        name: "Domain Admins"
+        members:
+          - Administrator
+        state: present 

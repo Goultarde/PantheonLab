@@ -1,0 +1,16 @@
+---
+- import_playbook: config.yml
+
+- name: Configuration initiale
+  hosts: "{{ target_host }}"
+  gather_facts: true
+  tasks:
+    - name: Définir le hostname
+      win_hostname:
+        name: "{{ lab.hosts[server_type].hostname }}"
+
+    - name: Définir le mot de passe de l'administrateur local
+      win_user:
+        name: Administrator
+        password: "{{ lab.hosts[server_type].local_admin_password }}"
+        state: present 
