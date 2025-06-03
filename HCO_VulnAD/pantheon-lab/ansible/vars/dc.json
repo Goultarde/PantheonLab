@@ -1,0 +1,261 @@
+{
+"lab" : {
+    "hosts" : {
+        "dc01" : {
+            "hostname" : "pantheon-dc01",
+            "type" : "dc",
+            "local_admin_password": "Pantheon@2024",
+            "domain" : "pantheon.god",
+            "path" : "DC=pantheon,DC=god",
+            "local_groups" : {
+                "Administrators" : [
+                    "pantheon\\zeus",
+                    "pantheon\\hera",
+                    "pantheon\\poseidon"
+                ],
+                "Remote Desktop Users" : [
+                    "pantheon\\Olympians",
+                    "pantheon\\Titans"
+                ]
+            }
+        },
+        "dc02" : {
+            "hostname" : "pantheon-ca01",
+            "type" : "dc",
+            "local_admin_password": "Pantheon@2024",
+            "domain" : "pantheon.god",
+            "path" : "DC=pantheon,DC=god",
+            "local_groups" : {
+                "Administrators" : [
+                    "pantheon\\zeus",
+                    "pantheon\\hera",
+                    "pantheon\\athena"
+                ],
+                "Remote Desktop Users" : [
+                    "pantheon\\Olympians"
+                ]
+            }
+        }
+    },
+    "domains" : {
+        "pantheon.god" : {
+            "organisation_units" : {
+                "OLYMPIENS" : {
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god",
+                    "groups" : {
+                        "OLYMPE-HEROS" : {
+                            "path" : "OU=OLYMPIENS,DC=pantheon,DC=god",
+                            "type" : "global"
+                        },
+                        "OLYMPE-IMORTAL-HEROS" : {
+                            "path" : "OU=OLYMPIENS,DC=pantheon,DC=god",
+                            "type" : "global"
+                        },
+                        "OLYMPE-GODS" : {
+                            "path" : "OU=OLYMPIENS,DC=pantheon,DC=god",
+                            "type" : "global"
+                        }
+                    }
+                }
+            },
+            "gmsa" : {
+                "svc_athena_gmsa" : {
+                    "gMSA_Name" : "svc_athena_gmsa",
+                    "gMSA_FQDN" : "svc_athena_gmsa.pantheon.god",
+                    "gMSA_SPNs" : ["HTTP/athena", "HTTP/athena.pantheon.god"],
+                    "gMSA_HostNames" : ["athena"],
+                    "PrincipalsAllowedToRetrieveManagedPassword" : ["OLYMPE-IMORTAL-HEROS"],
+                    "kdsrootkey" : {
+                        "EffectiveTime" : "-10h"
+                    }
+                }
+            },
+            "acls" : {
+                "GenericWrite_ImmortalHeroes_Heroes" : {
+                    "for": "OLYMPE-IMORTAL-HEROS",
+                    "to": "OLYMPE-HEROS",
+                    "right": "GenericWrite",
+                    "inheritance": "None"
+                }
+            },
+            "users" : {
+                "zeus" : {
+                    "firstname" : "zeus",
+                    "surname" : "olympus",
+                    "password" : "ThunderKing",
+                    "description" : "Je suis Zeus, le roi de l'Olympe, le maître incontesté du ciel, de la foudre et du tonnerre.",
+                    "groups" : ["Domain Admins", "Enterprise Admins", "OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "hera" : {
+                    "firstname" : "hera",
+                    "surname" : "olympus",
+                    "password" : "QueenOfGods",
+                    "description" : "Je suis Héra, grande reine de l'Olympe, épouse de Zeus, déesse du mariage, de la fidélité et des femmes.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "poseidon" : {
+                    "firstname" : "poseidon",
+                    "surname" : "ocean",
+                    "password" : "TridentMaster",
+                    "description" : "Je suis Poséidon, le souverain des océans, le seigneur des tempêtes et le maître des profondeurs.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "demeter" : {
+                    "firstname" : "demeter",
+                    "surname" : "earth",
+                    "password" : "HarvestQueen",
+                    "description" : "Je suis Déméter, déesse nourricière, gardienne de la terre cultivée, des moissons et de la fertilité.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "athena" : {
+                    "firstname" : "athena",
+                    "surname" : "wisdom",
+                    "password" : "StrategicMind",
+                    "description" : "Je suis Athéna, née toute armée du crâne de Zeus, déesse de la sagesse, de la stratégie et de l'intelligence éclairée.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "apollo" : {
+                    "firstname" : "apollo",
+                    "surname" : "sun",
+                    "password" : "GoldenArcher",
+                    "description" : "Je suis Apollon, éclat du soleil, musicien des sphères célestes, dieu des arts, de la lumière, de la médecine et de la vérité.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "artemis" : {
+                    "firstname" : "artemis",
+                    "surname" : "hunt",
+                    "password" : "SilverBow",
+                    "description" : "Je suis Artémis, sœur d'Apollon, déesse de la chasse, de la nature sauvage et de la lune.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "ares" : {
+                    "firstname" : "ares",
+                    "surname" : "war",
+                    "password" : "BloodFury",
+                    "description" : "Je suis Arès, incarnation vivante du conflit, dieu de la guerre brute, du sang versé et de la rage incontrôlée.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "aphrodite" : {
+                    "firstname" : "aphrodite",
+                    "surname" : "love",
+                    "password" : "BeautyQueen",
+                    "description" : "Je suis Aphrodite, née de l'écume des mers, déesse de l'amour, du désir et de la beauté envoûtante.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "hephaistos" : {
+                    "firstname" : "hephaistos",
+                    "surname" : "forge",
+                    "password" : "MasterSmith",
+                    "description" : "Je suis Héphaïstos, maître du feu et des forges divines.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "hermes" : {
+                    "firstname" : "hermes",
+                    "surname" : "messenger",
+                    "password" : "SwiftRunner",
+                    "description" : "Je suis Hermès, le messager ailé, le dieu des voyageurs, des commerçants, des voleurs, et des frontières.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "dionysos" : {
+                    "firstname" : "dionysos",
+                    "surname" : "wine",
+                    "password" : "PartyMaster",
+                    "description" : "Je suis Dionysos, dieu du vin, de l'extase, des mystères et des fêtes déchaînées.",
+                    "groups" : ["OLYMPE-GODS"],
+                    "path" : "CN=Users,DC=pantheon,DC=god"
+                },
+                "achille" : {
+                    "firstname" : "achille",
+                    "surname" : "pelide",
+                    "password" : "Invincible",
+                    "description" : "Fils de Thétis (nymphe) et de Pélée (mortel).",
+                    "groups" : ["OLYMPE-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "theseus" : {
+                    "firstname" : "theseus",
+                    "surname" : "athens",
+                    "password" : "MinotaurSlayer",
+                    "description" : "Roi d'Athènes, vainqueur du Minotaure.",
+                    "groups" : ["OLYMPE-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "perseus" : {
+                    "firstname" : "perseus",
+                    "surname" : "argos",
+                    "password" : "GorgonSlayer",
+                    "description" : "Vainqueur de Méduse, fils de Zeus et Danaé.",
+                    "groups" : ["OLYMPE-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "ulysse" : {
+                    "firstname" : "ulysse",
+                    "surname" : "ithaque",
+                    "password" : "CunningMind",
+                    "description" : "Roi d'Ithaque, héros de la guerre de Troie.",
+                    "groups" : ["OLYMPE-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "jason" : {
+                    "firstname" : "jason",
+                    "surname" : "iason",
+                    "password" : "GoldenFleece",
+                    "description" : "Chef des Argonautes, à la recherche de la Toison d'Or.",
+                    "groups" : ["OLYMPE-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "orphee" : {
+                    "firstname" : "orphee",
+                    "surname" : "thrace",
+                    "password" : "MusicMaster",
+                    "description" : "Musicien légendaire, fils d'Apollon et de Calliope.",
+                    "groups" : ["OLYMPE-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "hercule" : {
+                    "firstname" : "hercule",
+                    "surname" : "zeus",
+                    "password" : "TwelveLabors",
+                    "description" : "Fils de Zeus et d'Alcmène",
+                    "groups" : ["OLYMPE-IMORTAL-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "asclepios" : {
+                    "firstname" : "asclepios",
+                    "surname" : "apollo",
+                    "password" : "HealingGod",
+                    "description" : "Fils d'Apollon et de Coronis",
+                    "groups" : ["OLYMPE-IMORTAL-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "psyche" : {
+                    "firstname" : "psyche",
+                    "surname" : "eros",
+                    "password" : "SoulBeauty",
+                    "description" : "Mortelle, épouse d'Éros/cupidon",
+                    "groups" : ["OLYMPE-IMORTAL-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                },
+                "ganymede" : {
+                    "firstname" : "ganymede",
+                    "surname" : "troy",
+                    "password" : "EternalYouth",
+                    "description" : "Prince troyen d'une grande beauté.",
+                    "groups" : ["OLYMPE-IMORTAL-HEROS"],
+                    "path" : "OU=OLYMPIENS,DC=pantheon,DC=god"
+                }
+            }
+        }
+    }
+}}

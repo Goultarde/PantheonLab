@@ -3,95 +3,108 @@
   hosts: dc02
   gather_facts: true
   vars_files:
+    - ../vars/dc.yml
     - ../vars/default.yml
     - ../vars/linux_gods_users.yml
 
   tasks:
-    - name: Installer les rôles AD-Domain-Services et DNS
-      win_feature:
-        name:
-          - AD-Domain-Services
-          - DNS
-        include_management_tools: yes
-        state: present
-      register: ad_install
-
-    - name: Définir le mot de passe de l'administrateur local
-      win_user:
-        name: Administrator
-        password: "Pantheon@2024"
-        state: present
-
-    - name: Configurer le DNS local
+    - name: Configurer le DNS pour pointer vers DC01
       win_shell: |
         Set-DnsClientServerAddress -InterfaceAlias "Ethernet 2" -ServerAddresses "192.168.56.11"
-        if (-not (Get-DnsServerZone -Name "pantheon.god" -ErrorAction SilentlyContinue)) {
-          Add-DnsServerPrimaryZone -Name "pantheon.god" -ZoneFile "pantheon.god.dns" -DynamicUpdate None
-        }
-        if (-not (Get-DnsServerResourceRecord -ZoneName "pantheon.god" -Name "@" -ErrorAction SilentlyContinue)) {
-          Add-DnsServerResourceRecordA -Name "@" -ZoneName "pantheon.god" -IPv4Address "192.168.56.12"
-        }
-      register: dns_config
+      # Ajouter un délai pour s'assurer que le DNS est pris en compte
+    - name: Attendre que le DNS soit effectif
+      ansible.builtin.pause:
+        seconds: 10
 
-    - name: Créer l'enregistrement DNS pour dc02
+    - name: Vérifier si déjà joint au domaine
       win_shell: |
-        $zoneName = "pantheon.god"
-        $recordName = "dc02"
-        $ipAddress = "192.168.56.12"
-        $existingRecord = Get-DnsServerResourceRecord -ZoneName $zoneName -Name $recordName -ErrorAction SilentlyContinue
-        if (-not $existingRecord) {
-            Add-DnsServerResourceRecordA -Name $recordName -ZoneName $zoneName -IPv4Address $ipAddress -CreatePtr
+        $domain = (Get-ComputerInfo).CsDomain
+        if ($domain -eq "pantheon.god") {
+          Write-Host "Déjà joint au domaine pantheon.god"
+          exit 0
+        } else {
+          Write-Host "Pas encore joint au domaine"
+          exit 1
         }
-      register: dns_record
+      register: domain_check
+      ignore_errors: yes # Ignorer l'échec si non joint, ce qui est l'état attendu pour continuer
 
-    - name: Créer le dossier NTDS
-      win_file:
-        path: C:\Windows\NTDS
-        state: directory
+    - name: Joindre le domaine
+      win_domain_membership:
+        dns_domain_name: "{{ domain_name }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ admin_password }}"
+        state: domain
+      register: domain_join
+      when: domain_check.rc != 0 # Exécuter uniquement si la vérification a échoué (pas joint)
 
-    - name: Promouvoir le serveur en contrôleur de domaine
-      win_domain_controller:
-        dns_domain_name: pantheon.god
-        safe_mode_password: "{{ ad_safe_mode_password }}"
-        database_path: C:\Windows\NTDS
-        sysvol_path: C:\Windows\SYSVOL
-        state: domain_controller
-        domain_admin_user: .\Administrator
-        domain_admin_password: Pantheon@2024
-      register: check_domain_controller
-
-    - name: Redémarrer après promotion en contrôleur de domaine
+    - name: Redémarrer après jointure au domaine
       win_reboot:
         reboot_timeout: 900
         post_reboot_delay: 100
-      when: check_domain_controller.changed
+      when: domain_join.changed
 
-    - name: S'assurer que l'administrateur est dans le groupe Enterprise Admins
-      win_domain_group_membership:
-        name: "Enterprise Admins"
-        members:
-          - Administrator
-        state: present
+    # --- ADCS Root CA Configuration ---
+    - name: Vérifier si une CA est déjà installée
+      win_shell: |
+        try {
+          $ca = Get-CertificationAuthority -ErrorAction Stop
+          Write-Host "CA déjà installée: $($ca.DisplayName)"
+          exit 0
+        } catch {
+          Write-Host "Aucune CA installée"
+          exit 1
+        }
+      register: ca_check
+      ignore_errors: yes # Ignorer l'échec si aucune CA n'est installée
 
-    - name: S'assurer que l'administrateur est dans le groupe Domain Admins
-      win_domain_group_membership:
-        name: "Domain Admins"
-        members:
-          - Administrator
-        state: present
+    - name: Vérifier si déjà Autorité de Certification racine d'entreprise
+      win_shell: |
+        try {
+          $ca = Get-CertificationAuthority -ErrorAction Stop
+          if ($ca.CAType -eq 'EnterpriseRootCA') {
+            Write-Host "Déjà Autorité de Certification racine d'entreprise"
+            exit 0
+          } else {
+            Write-Host "CA installée mais pas de type EnterpriseRootCA"
+            exit 1
+          }
+        } catch {
+           Write-Host "Aucune CA installée (vérification de type ignorée)"
+           exit 1 # Aucune CA, donc pas une EnterpriseRootCA
+        }
+      register: ca_type_check
+      ignore_errors: yes # Ignorer l'échec si pas de CA ou pas le bon type
+      when: ca_check.rc == 0 # Exécuter uniquement si une CA est installée
 
-    # --- ADCS ---
-    - name: Installer le rôle ADCS
+    - name: Installer le rôle ADCS (Root CA)
       win_feature:
-        name: AD-Certificate
+        name:
+          - AD-Certificate
+          - ADCS-Web-Enrollment
         include_management_tools: yes
         state: present
-      register: adcs_install
+      register: adcs_install_root
+      when: ca_check.rc != 0 or ca_type_check.rc != 0 # Exécuter si aucune CA OU si la CA n'est pas de type EnterpriseRootCA
 
-    - name: Configurer ADCS
+    - name: Configurer ADCS en tant qu'autorité de certification racine d'entreprise
       win_shell: |
-        Install-AdcsCertificationAuthority -CAType EnterpriseRootCA -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 2048 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 5 -DatabaseDirectory "C:\Windows\System32\CertLog" -LogDirectory "C:\Windows\System32\CertLog" -Force
-      when: adcs_install.changed
+        Install-AdcsCertificationAuthority `
+          -CAType EnterpriseRootCA `
+          -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" `
+          -KeyLength 2048 `
+          -HashAlgorithmName SHA256 `
+          -CACommonName "Pantheon-CA" `
+          -ValidityPeriod Years `
+          -ValidityPeriodUnits 10 `
+          -DatabaseDirectory "C:\\Windows\\System32\\CertLog" `
+          -LogDirectory "C:\\Windows\\System32\\CertLog" `
+          -Force
+      when: ca_check.rc != 0 or ca_type_check.rc != 0 # Exécuter si aucune CA OU si la CA n'est pas de type EnterpriseRootCA
+
+    - name: Installer le fournisseur NuGet
+      win_shell: |
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 
     - name: Installer le module PSPKI
       win_shell: |
@@ -102,4 +115,23 @@
         Import-Module PSPKI
         $caHostname = Get-CertificationAuthority | Select-Object -ExpandProperty ComputerName
         Get-CertificationAuthority "$caHostname" | Get-CertificationAuthorityAcl | Add-CertificationAuthorityAcl -Identity "pantheon.god\Administrator" -AccessType "Allow" -AccessMask "ManageCa" | Set-CertificationAuthorityAcl -RestartCA
-      register: ca_permissions 
+      register: ca_permissions
+
+    - name: Vérifier que le service IIS Admin est démarré
+      win_service:
+        name: WMSvc
+        state: started
+
+    - name: Vérifier l'accès local au service web CertSrv
+      win_uri:
+        url: "http://localhost/certsrv"
+        method: GET
+        return_content: yes
+        status_code:
+          - 200
+          - 401 # 401 est attendu si authentification requise
+      register: certsrv_access_check
+
+    - name: Afficher le résultat de la vérification d'accès CertSrv
+      debug:
+        msg: "Accès à CertSrv localement: {{ certsrv_access_check.status }}" 

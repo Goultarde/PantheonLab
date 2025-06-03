@@ -1,0 +1,41 @@
+---
+- name: Configuration du certificat LDAPS sur DC
+  hosts: dc01
+  gather_facts: true
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: plaintext
+    ansible_winrm_server_cert_validation: ignore
+    ansible_user: Administrator
+    ansible_password: Pantheon@2024
+    cert_template_name: "LDAPS-Web-Server"   # Nom du template publié sur la CA
+    ca_server_ip: "192.168.56.12"             # IP du serveur ADCS
+    fqdn_dc: "dc01.pantheon.god"              # FQDN complet du contrôleur de domaine
+
+  tasks:
+    - name: Installer certificat LDAPS sur DC
+      win_shell: |
+        $cert = Get-Certificate -Template "{{ cert_template_name }}" -CertStoreLocation Cert:\LocalMachine\My -DnsName "{{ fqdn_dc }}" -Url "http://{{ ca_server_ip }}/certsrv"
+        if ($cert) {
+          Write-Output "Certificat demandé et installé avec succès"
+        } else {
+          Write-Error "La demande de certificat a échoué"
+        }
+      register: cert_request
+      ignore_errors: no
+
+    - name: Vérifier que le certificat est bien installé dans le magasin personnel
+      win_shell: |
+        $certs = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*{{ fqdn_dc }}*" }
+        if ($certs) {
+          Write-Output "Certificat LDAPS présent"
+          exit 0
+        } else {
+          Write-Error "Certificat LDAPS absent"
+          exit 1
+        }
+      register: cert_check
+
+    - name: Afficher résultat certificat
+      debug:
+        msg: "{{ cert_check.stdout }}" 

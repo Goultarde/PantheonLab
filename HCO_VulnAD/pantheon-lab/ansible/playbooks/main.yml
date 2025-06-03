@@ -1,3 +1,40 @@
+---
+- name: Configuration du domaine Pantheon
+  hosts: domain:extensions
+  gather_facts: true
+  vars_files:
+    - "{{data_path}}/dc.json"
+
+  tasks:
+    - name: Inclure la configuration
+      ansible.builtin.import_playbook: config.yml
+
+    - name: Afficher la configuration
+      ansible.builtin.debug:
+        msg: "Configuration du domaine {{ lab.domains['pantheon.god'].organisation_units.OLYMPIENS.groups }}"
+
+    - name: Créer les groupes
+      community.windows.win_domain_group:
+        name: "{{ item.key }}"
+        scope: "{{ item.value.type }}"
+        path: "{{ item.value.path }}"
+        state: present
+      loop: "{{ lab.domains['pantheon.god'].organisation_units.OLYMPIENS.groups | dict2items }}"
+      when: item.value is defined
+
+    - name: Créer les utilisateurs
+      community.windows.win_domain_user:
+        name: "{{ item.key }}"
+        firstname: "{{ item.value.firstname }}"
+        surname: "{{ item.value.surname }}"
+        password: "{{ item.value.password }}"
+        description: "{{ item.value.description }}"
+        groups: "{{ item.value.groups }}"
+        path: "{{ item.value.path }}"
+        state: present
+      loop: "{{ lab.domains['pantheon.god'].users | dict2items }}"
+      when: item.value is defined
+
 - import_playbook: setup-locale.yml
 - import_playbook: playbook.yml
 - import_playbook: playbook-users-gods.yml

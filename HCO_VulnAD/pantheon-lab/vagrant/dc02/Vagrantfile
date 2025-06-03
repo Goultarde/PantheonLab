@@ -13,14 +13,15 @@ Vagrant.configure("2") do |config|
   end
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "../../ansible/playbooks/dc02.yml"
-    ansible.inventory_path = "../../inventory"
+    ansible.inventory_path = "../../ansible/inventory/hosts.yml"
     ansible.limit = "dc02"
     ansible.extra_vars = {
       ansible_connection: "winrm",
       ansible_winrm_transport: "plaintext",
       ansible_winrm_server_cert_validation: "ignore",
       ansible_user: "vagrant",
-      ansible_password: "vagrant"
+      ansible_password: "vagrant",
+      ansible_winrm_port: 5985
     }
   end
 end 

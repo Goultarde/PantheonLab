@@ -35,6 +35,7 @@
         $effectiveTime = (Get-Date).AddHours(-10)
         Add-KdsRootKey -EffectiveTime $effectiveTime
       register: kds_key
+      tags: kds_root_key
 
     - name: Créer le compte gMSA pour Athena
       win_shell: |

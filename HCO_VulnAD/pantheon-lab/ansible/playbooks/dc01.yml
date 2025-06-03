@@ -5,17 +5,13 @@
   vars_files:
     - ../vars/default.yml
     - ../vars/linux_gods_users.yml
+    - ../vars/dc.yml
+  vars:
+    cert_template_name: "LDAPS-Web-Server"   # Nom du template publié sur la CA
+    ca_server_ip: "192.168.56.12"             # IP du serveur ADCS
+    fqdn_dc: "dc01.pantheon.god"              # FQDN complet du contrôleur de domaine
 
   tasks:
-    - name: Installer les rôles AD-Domain-Services et DNS
-      win_feature:
-        name: 
-          - AD-Domain-Services
-          - DNS
-        include_management_tools: yes
-        state: present
-      register: ad_install
-
     - name: Définir le mot de passe de l'administrateur local
       win_user:
         name: Administrator
@@ -24,32 +20,8 @@
 
     - name: Configurer le DNS local
       win_shell: |
-        Set-DnsClientServerAddress -InterfaceAlias "Ethernet 2" -ServerAddresses "127.0.0.1"
-        if (-not (Get-DnsServerZone -Name "pantheon.god" -ErrorAction SilentlyContinue)) {
-          Add-DnsServerPrimaryZone -Name "pantheon.god" -ZoneFile "pantheon.god.dns" -DynamicUpdate None
-        }
-        if (-not (Get-DnsServerResourceRecord -ZoneName "pantheon.god" -Name "@" -ErrorAction SilentlyContinue)) {
-          Add-DnsServerResourceRecordA -Name "@" -ZoneName "pantheon.god" -IPv4Address "192.168.56.11"
-        }
-      register: dns_config
-
-    - name: Créer l'enregistrement DNS pour dc01
-      win_shell: |
-        $zoneName = "pantheon.god"
-        $recordName = "dc01"
-        $ipAddress = "192.168.56.11"
-        
-        # Vérifier si l'enregistrement existe déjà
-        $existingRecord = Get-DnsServerResourceRecord -ZoneName $zoneName -Name $recordName -ErrorAction SilentlyContinue
-        
-        if (-not $existingRecord) {
-            # Créer l'enregistrement A
-            Add-DnsServerResourceRecordA -Name $recordName -ZoneName $zoneName -IPv4Address $ipAddress -CreatePtr
-            Write-Host "Enregistrement DNS créé pour $recordName.$zoneName"
-        } else {
-            Write-Host "L'enregistrement DNS existe déjà pour $recordName.$zoneName"
-        }
-      register: dns_record
+        Set-DnsClientServerAddress -InterfaceAlias "Ethernet 2" -ServerAddresses "192.168.56.11"
+      # La création de la zone DNS et des enregistrements sera gérée par la promotion du DC
 
     - name: Créer le dossier NTDS
       win_file:
@@ -57,9 +29,9 @@
         state: directory
 
     - name: Créer le domaine
-      win_domain:
-        domain_netbios_name: PANTHEON
+      microsoft.ad.domain:
         dns_domain_name: pantheon.god
+        domain_netbios_name: PANTHEON
         safe_mode_password: "{{ ad_safe_mode_password }}"
       register: check_domain
 
@@ -70,7 +42,7 @@
       when: check_domain.changed
 
     - name: Promouvoir le serveur en contrôleur de domaine
-      win_domain_controller:
+      microsoft.ad.domain_controller:
         dns_domain_name: pantheon.god
         safe_mode_password: "{{ ad_safe_mode_password }}"
         database_path: C:\Windows\NTDS
@@ -89,15 +61,13 @@
     - name: S'assurer que l'administrateur est dans le groupe Enterprise Admins
       win_domain_group_membership:
         name: "Enterprise Admins"
-        members:
-          - Administrator
+        members: Administrator
         state: present
 
     - name: S'assurer que l'administrateur est dans le groupe Domain Admins
       win_domain_group_membership:
         name: "Domain Admins"
-        members:
-          - Administrator
+        members: Administrator
         state: present
 
     - name: Créer les utilisateurs dieux dans l'AD
@@ -114,14 +84,13 @@
     - name: Ajouter Zeus au groupe Enterprise Admins
       win_domain_group_membership:
         name: "Enterprise Admins"
-        members:
-          - zeus
+        members: zeus
         state: present
 
     - name: Ajouter Zeus au groupe Domain Admins
       win_domain_group_membership:
         name: "Domain Admins"
-        members: ["Administrator", "zeus"]
+        members: zeus
         state: present
-
-    # Fin du playbook 
+    # Fin du playbook
+ 

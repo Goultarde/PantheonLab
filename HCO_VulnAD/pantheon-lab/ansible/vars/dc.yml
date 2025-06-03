@@ -1,0 +1,12 @@
+---
+# Variables pour les contrôleurs de domaine
+admin_password: "Pantheon@2024"
+safe_mode_password: "Pantheon@2024" 
+domain_name: "pantheon.god"
+domain_netbios: "PANTHEON"
+site_name: "Default-First-Site-Name"
+database_path: "C:\\Windows\\NTDS"
+sysvol_path: "C:\\Windows\\SYSVOL"
+log_path: "C:\\Windows\\NTDS"
+local_admin_user: ".\\Administrator"
+domain_admin_user: "pantheon.god\\Administrator" 
