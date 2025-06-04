@@ -19,9 +19,9 @@
                 ]
             }
         },
-        "dc02" : {
+        "ca01" : {
             "hostname" : "pantheon-ca01",
-            "type" : "dc",
+            "type" : "ca",
             "local_admin_password": "Pantheon@2024",
             "domain" : "pantheon.god",
             "path" : "DC=pantheon,DC=god",

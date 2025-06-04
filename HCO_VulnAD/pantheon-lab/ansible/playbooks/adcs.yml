@@ -1,117 +1,38 @@
 ---
 - import_playbook: config.yml
 
-- name: Configuration du DC02
-  hosts: dc02
+- name: Configuration du CA01
+  hosts: pantheon-ca01
   gather_facts: true
-  
+  vars:
+    domain: "{{ lab.hosts.ca01.domain }}"
+    domain_admin_user: "{{ domain }}\\administrator"
+    domain_admin_password: "{{ lab.hosts.ca01.local_admin_password }}"
   tasks:
     - name: Configurer le DNS pour pointer vers DC01
-      win_shell: |
-        Set-DnsClientServerAddress -InterfaceAlias "Ethernet 2" -ServerAddresses "192.168.56.11"
-      # Ajouter un délai pour s'assurer que le DNS est pris en compte
+      win_dns_client:
+        adapter_name: "Ethernet 2"
+        dns_servers:
+          - 192.168.56.11
+
     - name: Attendre que le DNS soit effectif
-      ansible.builtin.pause:
+      pause:
         seconds: 10
 
-    - name: Vérifier si déjà joint au domaine
-      win_shell: |
-        $domain = (Get-ComputerInfo).CsDomain
-        if ($domain -eq "{{ lab.hosts[server_type].domain }}") {
-          Write-Host "Déjà joint au domaine {{ lab.hosts[server_type].domain }}"
-          exit 0
-        } else {
-          Write-Host "Pas encore joint au domaine"
-          exit 1
-        }
-      register: domain_check
-      ignore_errors: yes # Ignorer l'échec si non joint, ce qui est l'état attendu pour continuer
-
-    - name: Joindre le domaine
-      win_domain_membership:
-        dns_domain_name: "{{ lab.hosts[server_type].domain }}"
-        domain_admin_user: "{{ lab.hosts[server_type].domain_admin_user }}"
-        domain_admin_password: "{{ lab.hosts[server_type].domain_admin_password }}"
+    - name: Joindre le domaine pantheon.god
+      ansible.windows.win_domain_membership:
+        dns_domain_name: "{{ domain }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
         state: domain
-      register: domain_join
-      when: domain_check.rc != 0 # Exécuter uniquement si la vérification a échoué (pas joint)
+      register: domain_state
 
     - name: Redémarrer après jointure au domaine
-      win_reboot:
-        reboot_timeout: 900
-        post_reboot_delay: 100
-      when: domain_join.changed
+      ansible.windows.win_reboot:
+        msg: "Redémarrage après jointure au domaine"
+        pre_reboot_delay: 30
+        post_reboot_delay: 30
+        reboot_timeout: 3600
+      when: domain_state.reboot_required
 
-    # --- ADCS Root CA Configuration ---
-    - name: Vérifier si une CA est déjà installée
-      win_shell: |
-        try {
-          $ca = Get-CertificationAuthority -ErrorAction Stop
-          Write-Host "CA déjà installée: $($ca.DisplayName)"
-          exit 0
-        } catch {
-          Write-Host "Aucune CA installée"
-          exit 1
-        }
-      register: ca_check
-      ignore_errors: yes # Ignorer l'échec si aucune CA n'est installée
-
-    - name: Vérifier si déjà Autorité de Certification racine d'entreprise
-      win_shell: |
-        try {
-          $ca = Get-CertificationAuthority -ErrorAction Stop
-          if ($ca.CAType -eq 'EnterpriseRootCA') {
-            Write-Host "Déjà Autorité de Certification racine d'entreprise"
-            exit 0
-          } else {
-            Write-Host "CA installée mais pas de type EnterpriseRootCA"
-            exit 1
-          }
-        } catch {
-           Write-Host "Aucune CA installée (vérification de type ignorée)"
-           exit 1 # Aucune CA, donc pas une EnterpriseRootCA
-        }
-      register: ca_type_check
-      ignore_errors: yes # Ignorer l'échec si pas de CA ou pas le bon type
-      when: ca_check.rc == 0 # Exécuter uniquement si une CA est installée
-
-    - name: Installer le rôle ADCS (Root CA)
-      win_feature:
-        name:
-          - AD-Certificate
-          - ADCS-Web-Enrollment
-        include_management_tools: yes
-        state: present
-      register: adcs_install_root
-      when: ca_check.rc != 0 or ca_type_check.rc != 0 # Exécuter si aucune CA OU si la CA n'est pas de type EnterpriseRootCA
-
-    - name: Configurer ADCS en tant qu'autorité de certification racine d'entreprise
-      win_shell: |
-        Install-AdcsCertificationAuthority `
-          -CAType EnterpriseRootCA `
-          -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" `
-          -KeyLength 2048 `
-          -HashAlgorithmName SHA256 `
-          -CACommonName "{{ lab.domains[domain].netbios_name }}-CA" `
-          -ValidityPeriod Years `
-          -ValidityPeriodUnits 10 `
-          -DatabaseDirectory "C:\\Windows\\System32\\CertLog" `
-          -LogDirectory "C:\\Windows\\System32\\CertLog" `
-          -Force
-      when: ca_check.rc != 0 or ca_type_check.rc != 0 # Exécuter si aucune CA OU si la CA n'est pas de type EnterpriseRootCA
-
-    - name: Installer le fournisseur NuGet
-      win_shell: |
-        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-
-    - name: Installer le module PSPKI
-      win_shell: |
-        Install-Module PSPKI -Force
-
-    - name: Configurer les permissions sur le CA
-      win_shell: |
-        Import-Module PSPKI
-        $caHostname = Get-CertificationAuthority | Select-Object -ExpandProperty ComputerName
-        Get-CertificationAuthority "$caHostname" | Get-CertificationAuthorityAcl | Add-CertificationAuthorityAcl -Identity "{{ lab.hosts[server_type].domain }}\Administrator" -AccessType "Allow" -AccessMask "ManageCa" | Set-CertificationAuthorityAcl -RestartCA
-      register: ca_permissions
 

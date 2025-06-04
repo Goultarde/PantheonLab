@@ -13,8 +13,8 @@ all:
               data_path: "{{ playbook_dir }}/../vars"
 
   vars:
-    ansible_user: Administrator
-    ansible_password: Pantheon@2024
+    ansible_user: 'Pantheon.god\Zeus'
+    ansible_password: 'Th3und3rK1ng!2024'
     ansible_connection: winrm
     ansible_winrm_server_cert_validation: ignore
     ansible_winrm_transport: ntlm

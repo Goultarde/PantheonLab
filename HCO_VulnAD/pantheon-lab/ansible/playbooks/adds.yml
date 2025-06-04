@@ -5,6 +5,8 @@
 - name: Configuration AD DS
   hosts: pantheon-dc01
   gather_facts: true
+  vars:
+    server_type: "dc01"
 
   tasks:
     - name: Configurer le DNS

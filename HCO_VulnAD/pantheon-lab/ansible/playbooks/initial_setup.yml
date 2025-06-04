@@ -8,9 +8,19 @@
     - name: Définir le hostname
       win_hostname:
         name: "{{ lab.hosts[server_type].hostname }}"
+      register: hostname_result
 
     - name: Définir le mot de passe de l'administrateur local
       win_user:
         name: Administrator
         password: "{{ lab.hosts[server_type].local_admin_password }}"
-        state: present 
+        state: present
+
+    - name: Redémarrer la machine si le hostname a changé
+      ansible.windows.win_reboot:
+        msg: "Redémarrage après configuration initiale (changement du nom d'hôte)"
+        pre_reboot_delay: 10
+        post_reboot_delay: 30
+        reboot_timeout: 600
+      when: hostname_result.reboot_required
+
