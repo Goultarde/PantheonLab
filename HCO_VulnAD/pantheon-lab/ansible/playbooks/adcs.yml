@@ -1,38 +1,99 @@
----
 - import_playbook: config.yml
 
-- name: Configuration du CA01
+- name: Configuration de l'Autorité de Certification (CA01)
   hosts: pantheon-ca01
   gather_facts: true
   vars:
-    domain: "{{ lab.hosts.ca01.domain }}"
+    server_type: "ca01"
+    domain: "{{ lab.hosts[server_type].domain }}"
+    hostname: "{{ lab.hosts[server_type].hostname }}"
     domain_admin_user: "{{ domain }}\\administrator"
-    domain_admin_password: "{{ lab.hosts.ca01.local_admin_password }}"
+    domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
+    ca_common_name: "test-CA"
+    ca_validity_period: 2
+    ca_web_enrollment: false  # Passe à true si nécessaire
+
   tasks:
-    - name: Configurer le DNS pour pointer vers DC01
-      win_dns_client:
-        adapter_name: "Ethernet 2"
-        dns_servers:
-          - 192.168.56.11
+    - name: Installer les rôles ADCS nécessaires
+      ansible.windows.win_feature:
+        name:
+          - AD-Certificate
+          - ADCS-Cert-Authority
+        state: present
+        include_management_tools: yes
+        include_sub_features: yes
 
-    - name: Attendre que le DNS soit effectif
-      pause:
-        seconds: 10
+    - name: Installer le rôle ADCS Web Enrollment (si demandé)
+      ansible.windows.win_feature:
+        name: ADCS-Web-Enrollment
+        state: present
+      when: ca_web_enrollment
 
-    - name: Joindre le domaine pantheon.god
-      ansible.windows.win_domain_membership:
-        dns_domain_name: "{{ domain }}"
-        domain_admin_user: "{{ domain_admin_user }}"
-        domain_admin_password: "{{ domain_admin_password }}"
-        state: domain
-      register: domain_state
+    - name: Vérifier si une CA est déjà installée
+      win_shell: |
+        try {
+          Import-Module ADCSDeployment
+          $ca = Get-CertificationAuthority -ErrorAction Stop
+          exit 0
+        } catch {
+          exit 1
+        }
+      register: ca_check
+      ignore_errors: true
 
-    - name: Redémarrer après jointure au domaine
-      ansible.windows.win_reboot:
-        msg: "Redémarrage après jointure au domaine"
-        pre_reboot_delay: 30
-        post_reboot_delay: 30
-        reboot_timeout: 3600
-      when: domain_state.reboot_required
+    - name: Vérifier le type de CA existante (doit être EnterpriseRootCA)
+      win_shell: |
+        try {
+          Import-Module ADCSDeployment
+          $ca = Get-CertificationAuthority -ErrorAction Stop
+          if ($ca.CAType -eq 'EnterpriseRootCA') {
+            exit 0
+          } else {
+            exit 1
+          }
+        } catch {
+          exit 1
+        }
+      register: ca_type_check
+      when: ca_check.rc == 0
+      ignore_errors: true
 
+    - name: Installer et configurer la CA si absente ou incorrecte
+      ansible.windows.win_powershell:
+        script: |
+          [CmdletBinding()]
+          param (
+            [String] $domain_username,
+            [String] $domain_password,
+            [String] $ca_common_name,
+            [Int] $validity_years
+          )
+
+          $ErrorActionPreference = 'Stop'
+
+          $pass = ConvertTo-SecureString $domain_password -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential ($domain_username, $pass)
+
+          # Vérifie si le service CertSvc existe
+          $svc = Get-Service -Name "CertSvc" -ErrorAction SilentlyContinue
+          if (-not $svc) {
+            # La CA n'est pas installée → on l’installe
+            Install-AdcsCertificationAuthority -Credential $cred -CAType EnterpriseRootCA `
+              -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" `
+              -KeyLength 2048 -HashAlgorithmName SHA256 `
+              -ValidityPeriod Years -ValidityPeriodUnits $validity_years `
+              -CACommonName $ca_common_name -Force
+
+            Write-Output "CA installed"
+            $Ansible.Changed = $true
+          } else {
+            Write-Output "CA already installed"
+            $Ansible.Changed = $false
+          }
+        parameters:
+          domain_username: "{{ domain_admin_user }}"
+          domain_password: "{{ domain_admin_password }}"
+          ca_common_name: "{{ ca_common_name }}"
+          validity_years: "{{ ca_validity_period }}"
+      register: adcs_result
 

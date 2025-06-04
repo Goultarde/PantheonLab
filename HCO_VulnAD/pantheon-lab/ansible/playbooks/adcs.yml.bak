@@ -4,9 +4,11 @@
   hosts: pantheon-ca01
   gather_facts: true
   vars:
-    domain: "{{ lab.hosts.ca01.domain }}"
+    server_type: "ca01"
+    domain: "{{ lab.hosts[server_type].domain }}"
+    hostname: "{{ lab.hosts[server_type].hostname }}"
     domain_admin_user: "{{ domain }}\\administrator"
-    domain_admin_password: "{{ lab.hosts.ca01.local_admin_password }}"
+    domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
   tasks:
     - name: Installer le rôle ADCS (Root CA)
       win_feature:
@@ -51,7 +53,7 @@
 
     - name: Configurer ADCS en tant qu'autorité de certification racine d'entreprise
       ansible.windows.win_powershell:
-        script: Install-AdcsCertificationAuthority -CAType EnterpriseRootCA -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 2048 -HashAlgorithmName SHA256 -CACommonName "PantheonCert-CA" -ValidityPeriod Years -ValidityPeriodUnits 2 -Force
+        script: Install-AdcsCertificationAuthority -CAType EnterpriseRootCA -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 2048 -HashAlgorithmName SHA256 -CACommonName "test-CA" -ValidityPeriod Years -ValidityPeriodUnits 2 -Force
       when: ca_check.rc != 0 or (ca_type_check is defined and ca_type_check.rc != 0)
 
     - name: Installer le fournisseur NuGet

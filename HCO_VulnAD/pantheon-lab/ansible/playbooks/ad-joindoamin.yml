@@ -1,0 +1,24 @@
+- import_playbook: config.yml
+
+- name: Configuration du CA01
+  hosts: pantheon-ca01
+  gather_facts: true
+  vars:
+    server_type: "ca01"
+    domain: "{{ lab.hosts[server_type].domain }}"
+    domain_admin_user: "{{ domain }}\\administrator"
+    domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
+  tasks:
+    - name: Configurer le DNS pour pointer vers DC01
+      win_dns_client:
+        adapter_name: "Ethernet 2"
+        dns_servers:
+          - 192.168.56.11
+
+    - name: Joindre le domaine pantheon.god
+      microsoft.ad.membership:
+        dns_domain_name: "{{ domain }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
+        state: domain
+        reboot: true

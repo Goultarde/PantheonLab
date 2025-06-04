@@ -7,6 +7,9 @@
   gather_facts: true
   vars:
     server_type: "dc01"
+    domain: "{{ lab.hosts[server_type].domain }}"
+    domain_admin_user: "{{ domain }}\\administrator"
+    domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
 
   tasks:
     - name: Configurer le DNS

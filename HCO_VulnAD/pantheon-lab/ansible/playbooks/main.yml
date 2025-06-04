@@ -5,5 +5,7 @@
 
 - import_playbook: adds.yml
 - import_playbook: domain_objects.yml
+- import_playbook: ad-joindoamin.yml
 - import_playbook: adcs.yml
+
 

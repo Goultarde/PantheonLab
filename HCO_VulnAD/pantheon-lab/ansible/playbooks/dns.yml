@@ -1,0 +1,32 @@
+---
+- import_playbook: config.yml
+
+- name: Configuration AD DS
+  hosts: pantheon-dc01
+  gather_facts: true
+  vars:
+    server_type: "dc01"
+    domain: "{{ lab.hosts[server_type].domain }}"
+    domain_admin_user: "{{ domain }}\\administrator"
+    domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
+
+  tasks:
+    - name: Ajouter des redirecteurs DNS publics via PowerShell
+      win_shell: |
+        Import-Module DNSServer
+        $forwarders = @("8.8.8.8","1.1.1.1")
+        Set-DnsServerForwarder -IPAddress $forwarders -PassThru
+
+    - name: Redémarrer le service DNS
+      win_service:
+        name: DNS
+        state: restarted
+
+    - name: Vérifier la résolution DNS d’un domaine externe
+      win_shell: nslookup www.powershellgallery.com
+      register: dns_test
+
+    - name: Afficher le résultat de la résolution
+      debug:
+        var: dns_test.stdout
+

@@ -1,0 +1,35 @@
+---
+- import_playbook: config.yml
+
+- name: Installer et configurer l'Autorité de Certification AD CS
+  hosts: pantheon-ca01
+  gather_facts: false
+
+  vars:
+    server_type: "ca01"
+    domain: "{{ lab.hosts[server_type].domain }}"
+    hostname: "{{ lab.hosts[server_type].hostname }}"
+    domain_admin_user: "{{ domain }}\\administrator"
+    domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
+    ca_web_enrollment: true  # Passe à true si nécessaire
+
+    # Variables du rôle trippsc2.adcs.certificate_authority
+    winca_username: "{{ domain_admin_user }}"
+    winca_password: "{{ domain_admin_password }}"
+    winca_is_root_ca: true
+    winca_is_ad_integrated: true
+    winca_ca_cert_common_name: "{{ hostname }}-CA"
+    winca_ca_cert_validity_period_unit: "{{ adcs_ca_validity_period | default('Years') }}"
+    winca_ca_cert_validity_period: "{{ adcs_ca_validity_period_units | default(5) }}"
+    winca_crypto_provider_name: "{{ adcs_crypto_provider_name | default('Microsoft Software Key Storage Provider') }}"
+    winca_crypto_provider_algorithm: rsa
+    winca_key_length: "{{ adcs_key_length | default(2048) }}"
+    winca_hash_algorithm_name: "{{ adcs_hash_algorithm_name | default('sha256') }}"
+    winca_install_management_tools: true
+    winca_add_certenroll_virtual_directory: "{{ ca_web_enrollment }}"
+    winca_overwrite_existing_ca_in_domain: "{{ adcs_force_install | default(false) }}"
+    winca_overwrite_existing_database: "{{ adcs_force_install | default(false) }}"
+    winca_overwrite_existing_key: "{{ adcs_force_install | default(false) }}"
+
+  roles:
+    - trippsc2.adcs.certificate_authority

@@ -8,9 +8,11 @@ all:
             pantheon-dc01:
               ansible_host: 192.168.56.11
               data_path: "{{ playbook_dir }}/../vars"
+              cert_signing_ca_shell_type: powershell
             pantheon-ca01:
               ansible_host: 192.168.56.12
               data_path: "{{ playbook_dir }}/../vars"
+              cert_signing_ca_shell_type: powershell
 
   vars:
     ansible_user: 'Pantheon.god\Zeus'
