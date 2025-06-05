@@ -19,7 +19,7 @@
     ad_ou: "{{ lab.domains[lab.hosts.dc01.domain].organisation_units }}"
     ad_groups: "{{ lab.domains[lab.hosts.dc01.domain].groups }}"
     gmsa: "{{ lab.domains[lab.hosts.dc01.domain].gmsa }}"
-    acls: "{{ lab.domains[lab.hosts.dc01.domain].acls }}"
+    acls: "{{ lab.domains[lab.hosts.dc01.domain].acls }}" 
 
   tasks:
     - name: Créer les OUs de premier niveau
@@ -33,12 +33,13 @@
         domain_server: "{{ domain_server }}"
       with_dict: "{{ ad_ou }}"
       register: ou_root_creation
-      no_log: true
+      loop_control:
+        label: "{{ item.key }}"
 
     - name: Créer les OUs enfants
       microsoft.ad.ou:
         name: "{{ item.key }}"
-        path: "{{ item.value.path }}"
+        path: "OU=ENFERS,{{ lab.hosts.dc01.path }}"
         description: "{{ item.value.description }}"
         state: present
         domain_username: "{{ domain_username }}"
@@ -46,7 +47,8 @@
         domain_server: "{{ domain_server }}"
       with_dict: "{{ ad_ou.ENFERS.children }}"
       register: ou_children_creation
-      no_log: true
+      loop_control:
+        label: "{{ item.key }}"
 
     - name: Créer les groupes du domaine
       microsoft.ad.group:
@@ -61,30 +63,74 @@
         domain_server: "{{ domain_server }}"
       with_dict: "{{ ad_groups }}"
       register: groups_creation
-      no_log: true
+      loop_control:
+        label: "{{ item.key }}"
 
     - name: Créer la KDS Root Key
       win_shell: |
         $effectiveTime = (Get-Date).AddHours(-10)
         Add-KdsRootKey -EffectiveTime $effectiveTime
       register: kds_key
-      no_log: true
 
     - name: Créer les comptes gMSA
-      win_shell: |
-        $groupDN = (Get-ADGroup -Identity "{{ item.value.PrincipalsAllowedToRetrieveManagedPassword[0] }}").DistinguishedName
-        $spns = @({{ item.value.gMSA_SPNs | map('regex_replace', '^(.*)$', '"$1"') | join(', ') }})
-        if (-not (Get-ADServiceAccount -Filter "Name -eq '{{ item.value.gMSA_Name }}'" -ErrorAction SilentlyContinue)) {
-          New-ADServiceAccount -Name "{{ item.value.gMSA_Name }}" `
-            -Path "OU=OLYMPIENS,{{ lab.hosts.dc01.path }}" `
-            -PrincipalsAllowedToRetrieveManagedPassword $groupDN `
-            -DNSHostName "{{ item.value.gMSA_FQDN }}" `
-            -ServicePrincipalNames $spns `
-            -Enabled $true
-        }
+      ansible.windows.win_powershell:
+        script: |
+          [CmdletBinding()]
+          param (
+              [String]
+              $gMSA_Name,
+
+              [String]
+              $gMSA_FQDN,
+
+              [String[]]
+              $gMSA_SPNs,
+
+              [String[]]
+              $PrincipalsAllowedToRetrieveManagedPassword,
+
+              [String]
+              $Path
+          )
+          Import-Module ActiveDirectory
+          Set-Location AD:
+          
+          try {
+            $principals = $PrincipalsAllowedToRetrieveManagedPassword | ForEach-Object { 
+              Get-ADGroup -Identity $_ 
+            }
+            
+            New-ADServiceAccount -Name $gMSA_Name `
+              -Path $Path `
+              -DNSHostName $gMSA_FQDN `
+              -PrincipalsAllowedToRetrieveManagedPassword $principals `
+              -ServicePrincipalNames $gMSA_SPNs `
+              -Enabled $true `
+              -Verbose
+          } catch {
+            throw $_
+          }
+        parameters:
+          gMSA_Name: "{{ item.value.gMSA_Name }}"
+          gMSA_FQDN: "{{ item.value.gMSA_FQDN }}"
+          gMSA_SPNs: "{{ item.value.gMSA_SPNs }}"
+          PrincipalsAllowedToRetrieveManagedPassword: "{{ item.value.PrincipalsAllowedToRetrieveManagedPassword }}"
+          Path: "OU=OLYMPIENS,{{ lab.hosts.dc01.path }}"
       with_dict: "{{ gmsa }}"
       register: gmsa_creation
-      no_log: true
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Afficher les détails de création du gMSA
+      debug:
+        msg: |
+          Création du compte gMSA {{ item.item.key }} :
+          - Nom : {{ item.item.value.gMSA_Name }}
+          - FQDN : {{ item.item.value.gMSA_FQDN }}
+          - SPNs : {{ item.item.value.gMSA_SPNs | join(', ') }}
+          - Principaux autorisés : {{ item.item.value.PrincipalsAllowedToRetrieveManagedPassword | join(', ') }}
+      loop: "{{ gmsa_creation.results }}"
+      when: item.changed
 
     - name: Créer les utilisateurs du domaine
       microsoft.ad.user:
@@ -104,7 +150,8 @@
         domain_server: "{{ domain_server }}"
       with_dict: "{{ ad_users }}"
       register: users_creation
-      no_log: true
+      loop_control:
+        label: "{{ item.key }}"
 
     - name: Configurer les ACLs
       win_shell: |
@@ -128,7 +175,6 @@
         Set-Acl -AclObject $acl -Path "AD:$targetDN"
         {% endfor %}
       register: acl_setup
-      no_log: true
 
     - name: Afficher le résumé de la configuration
       debug:
