@@ -1,0 +1,20 @@
+[Version]
+Signature="$Windows NT$"
+
+[NewRequest]
+Subject = "{{ cert_subject }}"
+KeySpec = 1
+KeyLength = 2048
+Exportable = TRUE
+MachineKeySet = TRUE
+SMIME = FALSE
+PrivateKeyArchive = FALSE
+UserProtected = FALSE
+UseExistingKeySet = FALSE
+ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
+ProviderType = 12
+RequestType = PKCS10
+KeyUsage = 0xa0
+
+[Extensions]
+2.5.29.17 = "{{ 'dns=' + hostname }}" 

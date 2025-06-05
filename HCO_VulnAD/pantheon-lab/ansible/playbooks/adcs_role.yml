@@ -2,16 +2,16 @@
 - import_playbook: config.yml
 
 - name: Installer et configurer l'Autorité de Certification AD CS
-  hosts: pantheon-ca01
+  hosts: pantheon-dc01
   gather_facts: false
 
   vars:
-    server_type: "ca01"
+    server_type: "dc01"
     domain: "{{ lab.hosts[server_type].domain }}"
     hostname: "{{ lab.hosts[server_type].hostname }}"
     domain_admin_user: "{{ domain }}\\administrator"
     domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
-    ca_web_enrollment: true  # Passe à true si nécessaire
+    ca_web_enrollment: false  # Passe à true si nécessaire
 
     # Variables du rôle trippsc2.adcs.certificate_authority
     winca_username: "{{ domain_admin_user }}"

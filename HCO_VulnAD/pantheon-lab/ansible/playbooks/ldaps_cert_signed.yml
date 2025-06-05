@@ -1,0 +1,32 @@
+- import_playbook: config.yml
+- name: Read data files
+  hosts: pantheon-dc01
+  gather_facts: yes
+  tasks:
+    - name: save the Json data to a Variable as a Fact
+      ansible.builtin.set_fact:
+        my_json_data: "{{ lookup('file', 'somefile.json') | from_json }}"
+
+- name: Déployer automatiquement un certificat LDAPS signé via ADCS
+  hosts: pantheon-dc01
+  gather_facts: no
+  tasks:
+    - name: Créer un modèle de certificat "LDAPS Server Auth" si inexistant
+      win_shell: |
+        $templateName = "LDAPS Server Auth"
+        $existing = certutil -template | Select-String $templateName
+        if (-not $existing) {
+          certutil -dstemplate -dup "Computer" "$templateName"
+          # Note : la configuration fine (EKU, Exportable) doit être faite manuellement ou via script ADSI
+          certutil -SetCATemplates +$templateName
+          Write-Output "Modèle '$templateName' créé et publié."
+        }
+        else {
+          Write-Output "Le modèle existe déjà."
+        }
+      args:
+        executable: powershell.exe
+
+    # Ici tu peux ajouter d'autres tâches pour demander un certificat, l'installer, etc.
+
+

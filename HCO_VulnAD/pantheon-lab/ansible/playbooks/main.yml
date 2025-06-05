@@ -4,8 +4,8 @@
   gather_facts: true
 
 - import_playbook: adds.yml
+- import_playbook: dns.yml
+- import_playbook: adcs_role.yml
 - import_playbook: domain_objects.yml
-- import_playbook: ad-joindoamin.yml
-- import_playbook: adcs.yml
 
 

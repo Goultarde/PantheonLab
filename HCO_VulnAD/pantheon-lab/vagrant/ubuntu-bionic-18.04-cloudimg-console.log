@@ -707,3 +707,4 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC/AZ+/hcPGqy9LDEoVt9Nijk326d/Gud30zjgrvHrd
 Ubuntu 18.04.6 LTS ubuntu-bionic ttyS0
 
 ubuntu-bionic login: [64554.010080] e1000 0000:00:08.0 enp0s8: Reset adapter
+[126971.172168] e1000 0000:00:08.0 enp0s8: Reset adapter

@@ -1,99 +1,100 @@
+---
 - import_playbook: config.yml
 
-- name: Configuration de l'Autorité de Certification (CA01)
+- name: Configuration du CA01
   hosts: pantheon-ca01
   gather_facts: true
   vars:
-    server_type: "ca01"
-    domain: "{{ lab.hosts[server_type].domain }}"
-    hostname: "{{ lab.hosts[server_type].hostname }}"
+    domain: "{{ lab.hosts.ca01.domain }}"
     domain_admin_user: "{{ domain }}\\administrator"
-    domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
-    ca_common_name: "test-CA"
-    ca_validity_period: 2
-    ca_web_enrollment: false  # Passe à true si nécessaire
-
+    domain_admin_password: "{{ lab.hosts.ca01.local_admin_password }}"
   tasks:
-    - name: Installer les rôles ADCS nécessaires
-      ansible.windows.win_feature:
-        name:
-          - AD-Certificate
-          - ADCS-Cert-Authority
+    - name: Configurer le DNS pour pointer vers DC01
+      win_dns_client:
+        adapter_name: "Ethernet 2"
+        dns_servers:
+          - 192.168.56.11
+
+    - name: Attendre que le DNS soit effectif
+      pause:
+        seconds: 10
+
+    - name: Joindre le domaine pantheon.god
+      ansible.windows.win_domain_membership:
+        dns_domain_name: "{{ domain }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
+        state: domain
+      register: domain_state
+
+    - name: Redémarrer après jointure au domaine
+      ansible.windows.win_reboot:
+        msg: "Redémarrage après jointure au domaine"
+        pre_reboot_delay: 30
+        post_reboot_delay: 30
+        reboot_timeout: 3600
+      when: domain_state.reboot_required
+
+    - name: Installer le rôle ADCS (Root CA)
+      win_feature:
+        name: AD-Certificate
         state: present
         include_management_tools: yes
-        include_sub_features: yes
-
-    - name: Installer le rôle ADCS Web Enrollment (si demandé)
-      ansible.windows.win_feature:
-        name: ADCS-Web-Enrollment
-        state: present
-      when: ca_web_enrollment
 
     - name: Vérifier si une CA est déjà installée
       win_shell: |
-        try {
-          Import-Module ADCSDeployment
-          $ca = Get-CertificationAuthority -ErrorAction Stop
-          exit 0
-        } catch {
-          exit 1
+        Import-Module ADCSAdministration
+         try {
+           $ca = Get-CertificationAuthority -ErrorAction Stop
+           Write-Host "CA déjà installée: $($ca.DisplayName)"
+           exit 0
+         } catch {
+           Write-Host "Aucune CA installée"
+           exit 1
         }
       register: ca_check
       ignore_errors: true
 
-    - name: Vérifier le type de CA existante (doit être EnterpriseRootCA)
+    - name: Vérifier si déjà Autorité de Certification racine d'entreprise
       win_shell: |
+        Import-Module ServerManager
+        Import-Module ADCSDeployment
         try {
-          Import-Module ADCSDeployment
           $ca = Get-CertificationAuthority -ErrorAction Stop
           if ($ca.CAType -eq 'EnterpriseRootCA') {
+            Write-Host "Déjà Autorité de Certification racine d'entreprise"
             exit 0
           } else {
+            Write-Host "CA installée mais pas de type EnterpriseRootCA"
             exit 1
           }
         } catch {
-          exit 1
+           Write-Host "Aucune CA installée (vérification de type ignorée)"
+           exit 1
         }
       register: ca_type_check
-      when: ca_check.rc == 0
       ignore_errors: true
+      when: ca_check.rc == 0
 
-    - name: Installer et configurer la CA si absente ou incorrecte
-      ansible.windows.win_powershell:
-        script: |
-          [CmdletBinding()]
-          param (
-            [String] $domain_username,
-            [String] $domain_password,
-            [String] $ca_common_name,
-            [Int] $validity_years
-          )
+    - name: Configurer ADCS en tant qu'autorité de certification racine d'entreprise
+      win_shell: |
+        Import-Module ServerManager
+        Import-Module ADCSDeployment
+        Install-AdcsCertificationAuthority -CAType EnterpriseRootCA -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 2048 -HashAlgorithmName SHA256 -CACommonName "{{ domain }}-CA" -ValidityPeriod Years -ValidityPeriodUnits 2 -Force
+      when: ca_type_check.rc != 0
 
-          $ErrorActionPreference = 'Stop'
+    - name: Installer le fournisseur NuGet
+      win_shell: |
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 
-          $pass = ConvertTo-SecureString $domain_password -AsPlainText -Force
-          $cred = New-Object System.Management.Automation.PSCredential ($domain_username, $pass)
+    - name: Installer le module PSPKI
+      win_shell: |
+        Install-Module PSPKI -Force
 
-          # Vérifie si le service CertSvc existe
-          $svc = Get-Service -Name "CertSvc" -ErrorAction SilentlyContinue
-          if (-not $svc) {
-            # La CA n'est pas installée → on l’installe
-            Install-AdcsCertificationAuthority -Credential $cred -CAType EnterpriseRootCA `
-              -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" `
-              -KeyLength 2048 -HashAlgorithmName SHA256 `
-              -ValidityPeriod Years -ValidityPeriodUnits $validity_years `
-              -CACommonName $ca_common_name -Force
-
-            Write-Output "CA installed"
-            $Ansible.Changed = $true
-          } else {
-            Write-Output "CA already installed"
-            $Ansible.Changed = $false
-          }
-        parameters:
-          domain_username: "{{ domain_admin_user }}"
-          domain_password: "{{ domain_admin_password }}"
-          ca_common_name: "{{ ca_common_name }}"
-          validity_years: "{{ ca_validity_period }}"
-      register: adcs_result
+    - name: Configurer les permissions sur le CA
+      win_shell: |
+        Import-Module PSPKI
+        $caHostname = Get-CertificationAuthority | Select-Object -ExpandProperty ComputerName
+        Get-CertificationAuthority "$caHostname" | Get-CertificationAuthorityAcl | Add-CertificationAuthorityAcl -Identity "{{ domain }}\\Administrator" -AccessType "Allow" -AccessMask "ManageCa" | Set-CertificationAuthorityAcl -RestartCA
+      register: ca_permissions
 
