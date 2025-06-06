@@ -1,4 +1,4 @@
-- import_playbook: config.yml
+- import_playbook: windows_config.yml
 
 - name: Configuration du CA01
   hosts: pantheon-ca01

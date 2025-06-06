@@ -111,9 +111,9 @@
                     "inheritance": "All"
                 },
                 "WriteDACL_Thunderbolt_Domain" : {
-                    "for": "svc_thunderbolt",
+                    "for": "svc_thunderB$",
                     "to": "DC=pantheon,DC=god",
-                    "right": "WriteDACL",
+                    "right": "GenericAll",
                     "inheritance": "None"
                 }
             },

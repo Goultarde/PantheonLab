@@ -1,5 +1,5 @@
 ---
-- import_playbook: config.yml
+- import_playbook: windows_config.yml
 
 
 - name: Configuration AD DS
