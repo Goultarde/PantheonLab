@@ -1,0 +1,88 @@
+$ouDN = "OU=OLYMPE,DC=pantheon,DC=god"
+$userName = "pantheon\test_dmsa"
+$schemaGuid = [GUID] "7b8b558a-93a5-4af7-adca-c017e67f1057" # msDS-GroupManagedServiceAccount
+
+# Get the OU object
+$ou = [ADSI]"LDAP://$ouDN"
+
+# Get the security descriptor
+$sd = $ou.psbase.ObjectSecurity
+
+# Define Active Directory rights and inheritance flags
+$ActiveDirectoryRights = [System.DirectoryServices.ActiveDirectoryRights]::CreateChild
+$InheritanceType = [System.DirectoryServices.ActiveDirectorySecurityInheritance]::All
+$PropagationFlags = [System.Security.AccessControl.PropagationFlags]::None
+$AccessControlType = [System.Security.AccessControl.AccessControlType]::Allow
+
+# Translate username to security identifier (SID)
+$ntAccount = New-Object System.Security.Principal.NTAccount($userName)
+$sid = $ntAccount.Translate([System.Security.Principal.SecurityIdentifier])
+
+# Create the access rule for the msDS-GroupManagedServiceAccount class
+$ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule(
+    $sid,
+    $ActiveDirectoryRights,
+    $AccessControlType,
+    $schemaGuid,
+    $InheritanceType,
+    [guid]::Empty
+)
+
+$sd.AddAccessRule($ace)
+$ou.psbase.ObjectSecurity = $sd
+$ou.psbase.CommitChanges()
+
+
+Write-Output "Permission CreateChild on msDS-GroupManagedServiceAccount delegated to $userName on $ouDN"
+
+
+j'aimerais rajouter ce scénario :
+Un share SMB appeler heros dans le quel ce trouve un message qui souhaite la bienvenue aux nouveaux héros en indiquant un mots de passe par défaut à changer, ainsi il faudrais rajouter ces héros : Héraclès, Achille, Asclépios, Psyché, Ganymède
+
+
+
+
+
+# Crée une kds-key avec une data dans le passer
+Add-KdsRootKey -EffectiveTime ((Get-Date).AddHours(-10))
+
+# Crée un dmsa
+New-ADServiceAccount -Name svc_dmsa -DNSHostName "dc01.pantheon.god" -Path "CN=Users,DC=pantheon,DC=god" CreateDelegatedServiceAccount = $true
+$params = @{
+ Name = "svc_dmsa"
+ DNSHostName = "dc01.pantheon.god" # Nom de la machine au quel il est associer
+ CreateDelegatedServiceAccount = $true
+ KerberosEncryptionType = "AES256"
+}
+
+
+# Crée un gmsa
+$params = @{
+  Name = "svc_gmsa"
+  DNSHostName = "dc01.pantheon.god"  # Remplace par le FQDN réel du serveur
+  KerberosEncryptionType = "AES256"
+}
+
+New-ADServiceAccount @params
+
+
+
+
+
+
+
+
+
+
+RUN adduser --disabled-password appuser
+
+WORKDIR /app
+
+
+COPY ./tata.py /app/tata.py
+RUN chmod 755 tata.py
+
+USER appuser
+
+CMD [ "apt","/app/tata.py" ]
+CMD [ "python3","/app/tata.py" ]::q!
