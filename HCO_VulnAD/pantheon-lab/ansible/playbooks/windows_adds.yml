@@ -34,15 +34,15 @@
         domain_mode: WinThreshold
         install_dns: yes
         create_dns_delegation: no
-        reboot: yes
-        reboot_timeout: 900
+        reboot: true
+#       reboot_timeout: 900
       register: check_domain
 
-    - name: Redémarrer après création du domaine
-      win_reboot:
-        reboot_timeout: 900
-        post_reboot_delay: 300
-      when: check_domain.changed
+#   - name: Redémarrer après création du domaine
+#     win_reboot:
+#       reboot_timeout: 900
+#       post_reboot_delay: 300
+#     when: check_domain.changed
 
     - name: Promouvoir le serveur en contrôleur de domaine
       microsoft.ad.domain_controller:
@@ -53,13 +53,14 @@
         state: domain_controller
         domain_admin_user: .\Administrator
         domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"
+        reboot: true
       register: check_domain_controller
 
-    - name: Redémarrer après promotion en contrôleur de domaine
-      win_reboot:
-        reboot_timeout: 900
-        post_reboot_delay: 100
-      when: check_domain_controller.changed
+#   - name: Redémarrer après promotion en contrôleur de domaine
+#     win_reboot:
+#       reboot_timeout: 900
+#       post_reboot_delay: 100
+#     when: check_domain_controller.changed
 
     - name: S'assurer que l'administrateur est dans le groupe Enterprise Admins
       community.windows.win_domain_group_membership:
