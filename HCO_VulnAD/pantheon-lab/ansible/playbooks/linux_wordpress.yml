@@ -268,28 +268,28 @@
         wp theme install twentytwentyfive --activate --allow-root
       tags: [ wordpress ]
 
-    - name: Create home page "Bienvenue au panthéon"
+    - name: Create home page "Bienvenue au mont Olympe"
       become_user: www-data
       args:
         chdir: "/var/www/{{ http_host }}/wordpress"
       shell: |
         wp post create \
           --post_type=page \
-          --post_title="Bienvenue au panthéon" \
-          --post_name="bienvenue-au-pantheon" \
-          --post_content="{{ bienvenue_au_pantheon }}" \
+          --post_title="Bienvenue au mont Olympe" \
+          --post_name="bienvenue-au-mont-olympe" \
+          --post_content="{{ bienvenue_au_mont_olympe }}" \
           --post_status=publish \
           --allow-root
       tags: [ wordpress ]
 
 
-    - name: Set "Bienvenue au panthéon" as homepage
+    - name: Set "Bienvenue au mont Olympe" as homepage
       become_user: www-data
       args:
         chdir: "/var/www/{{ http_host }}/wordpress"
       shell: |
         wp option update show_on_front 'page' --allow-root
-        wp option update page_on_front $(wp post list --post_type=page --name="bienvenue-au-pantheon" --field=ID --allow-root)
+        wp option update page_on_front $(wp post list --post_type=page --name="bienvenue-au-mont-olympe" --field=ID --allow-root)
 
     - name: Create pages for each Greek god
       become_user: www-data
@@ -366,7 +366,7 @@
       shell: |
         wp menu create "MainMenu" --allow-root || true
         wp theme mod set nav_menu_locations "{\"primary\":2}" --allow-root || true
-        PAGE_ID1=$(wp post list --post_type=page --name="bienvenue-au-pantheon" --field=ID --allow-root)
+        PAGE_ID1=$(wp post list --post_type=page --name="bienvenue-au-mont-olympe" --field=ID --allow-root)
         PAGE_ID2=$(wp post list --post_type=page --name="les-12-dieux" --field=ID --allow-root)
         if [ -n "$PAGE_ID1" ]; then
           wp menu item add-post MainMenu "$PAGE_ID1" --title="Accueil" --allow-root
