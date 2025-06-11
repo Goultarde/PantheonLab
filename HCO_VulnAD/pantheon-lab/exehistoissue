@@ -1,0 +1,17 @@
+Hi, I figured out that now, when we use `exegol-history apply hosts`, the hostname parameter creates the environment variable `DC_HOST` with the IP instead of the FQDN (I'm using the free version)."
+
+
+![Image](https://github.com/user-attachments/assets/ed5bfb4b-072a-46ec-ae01-daeb1ce6e80a)
+
+![Image](https://github.com/user-attachments/assets/30b9123f-8fdd-443e-a554-afdec08acf7f)
+```
+[Jun 11, 2025 - 01:56:42 (CEST)] exegol-test /workspace # echo $DC_HOST                                               
+192.168.56.11
+```
+```
+cat /opt/tools/Exegol-history/profile.sh                   
+export IP='192.168.56.11'
+export TARGET='192.168.56.11'
+export DB_HOSTNAME='pantheon-dc01.patheon.god'
+export DC_HOST='192.168.56.11'
+```

@@ -1,0 +1,52 @@
+$subject = "CN=pantheon-dc01.pantheon.god"
+$certs = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -eq $subject }
+
+foreach ($cert in $certs) {
+  Write-Output "Suppression du certificat: $($cert.Thumbprint)"
+  Remove-Item -Path "Cert:\LocalMachine\My\$($cert.Thumbprint)" -Force
+}
+
+
+Get-ChildItem -Path Cert:\LocalMachine\My
+
+Crée:
+- L'utilisateur Hadès
+- Une OU ENFERS dont Hadès à un généricall (il doit avoir plein pouvoir sur tout ce qui ce trouve dans cette OU, je ne sais pas si le généric all suffit.)
+- Une OU TARTARE dans l'OU ENFERS
+- Un groupe TITANS-BANNIS dans l'OU TARETARE.
+- Groupe ELYSEE avec des heros morts dedans.
+- Les titans bannis dans le grouope TITANTS-BANNIS, tous désactivé
+│       ├── User: CRONOS (désactivé)
+│       ├── User: IAPETOS (désactivé)
+│       ├── User: COEUS (désactivé)
+│       ├── User: HYPERION (désactivé)
+│       └── User: KRIOS (désactivé)
+- Un
+- Le service gmsa svc-thunderbolt doit avoir avec un WriteDACL sur le domaine pantheon.god
+- CRONOS est dans les groupes "Remote Desktop Users" et "Remote Managers Users"
+- Tache planifier en tant que Athena qui execute un script dans le dossier nous permet de devenir Athena
+- Athena fessant partie du groupe OLYMPE-SERVICES-MANAGERS, elle est capable de lire le mdp du gmsa svc-thunderbolt, avec ce dernier on pourras ensuite faire un dcsync.
+-
+-
+-
+-
+-
+
+
+
+
+supprimer une OU :
+Import-Module ActiveDirectory
+
+$OU = "OU=ENFERS,DC=pantheon,DC=god"
+
+# Get the OU object
+$ouObj = Get-ADOrganizationalUnit -Identity $OU -Properties ProtectedFromAccidentalDeletion
+
+if ($ouObj.ProtectedFromAccidentalDeletion) {
+    Write-Host "Removing 'Protect from accidental deletion' flag on $OU"
+    Set-ADOrganizationalUnit -Identity $OU -ProtectedFromAccidentalDeletion $false
+} else {
+    Write-Host "'Protect from accidental deletion' flag is NOT set on $OU"
+}
+Remove-ADOrganizationalUnit -Identity $OU -Recursive -Confirm:$false

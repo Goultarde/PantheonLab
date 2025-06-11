@@ -1,7 +1,7 @@
 #Linux Credentials 
 linux_users_gods:
   - name: Zeus
-    password: "Z3us!2025@Pantheon"
+    password: "dsfdfZ3us!2025@Pantheon"
   - name: Héra
     password: "sjljkdH3r@!2025"
   - name: Poséidon
@@ -21,7 +21,7 @@ linux_users_gods:
   - name: Héphaïstos
     password: "nvlnsdifH3ph@!st0s2025"
   - name: Hermès
-    password: "s€€nvlsdkfH3mess!2025"
+    password: "qlkdjfiH3m€$$!2025"
   - name: Dionysos
     password: "lnvksdjfD!0nys0s@2025"
 

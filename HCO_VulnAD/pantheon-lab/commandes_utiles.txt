@@ -74,15 +74,3 @@ New-ADServiceAccount @params
 
 
 
-RUN adduser --disabled-password appuser
-
-WORKDIR /app
-
-
-COPY ./tata.py /app/tata.py
-RUN chmod 755 tata.py
-
-USER appuser
-
-CMD [ "apt","/app/tata.py" ]
-CMD [ "python3","/app/tata.py" ]::q!

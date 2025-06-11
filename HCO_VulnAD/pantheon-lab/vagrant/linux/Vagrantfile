@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
   config.vm.define "linux" do |linux|
-    config.vm.box = "boxesio/trusty64-standard"
+    config.vm.box = "hashicorp/bionic64"
     linux.vm.hostname = "linux"
 
     # Réseau privé (accès depuis l'hôte uniquement)

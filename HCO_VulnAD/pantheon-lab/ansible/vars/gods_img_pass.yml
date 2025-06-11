@@ -24,6 +24,6 @@ wordpress_users_gods:
   - { name: Arès, password: "Ar3s!2025" }
   - { name: Aphrodite, password: "Aphrod!t3@2025" }
   - { name: Héphaïstos, password: "H3ph@!st0s2025" }
-  - { name: Hermès, password: "H3m€$$!2025" }
+  - { name: Hermès, password: "mondieu" }
   - { name: Dionysos, password: "D!0nys0s@2025" }
 
