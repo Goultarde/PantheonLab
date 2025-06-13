@@ -1,0 +1,42 @@
+---
+- name: Configuration de l'utilisateur smbscores sur Linux
+  hosts: linux
+  become: yes
+  tasks:
+    - name: Création du répertoire /opt/scores
+      file:
+        path: /opt/scores
+        state: directory
+        mode: '0755'
+
+    - name: Création de l'utilisateur smbscores
+      user:
+        name: smbscores
+        shell: /sbin/nologin
+        home: /opt/scores
+        create_home: yes
+        state: present
+
+    - name: Copie du script score_update.sh
+      copy:
+        src: scripts/score_update.sh
+        dest: /opt/scores/score_update.sh
+        mode: '0755'
+        owner: smbscores
+        group: smbscores
+
+    - name: Création du répertoire pour les scores
+      file:
+        path: /srv/olympe/scores
+        state: directory
+        mode: '0755'
+        owner: smbscores
+        group: smbscores
+
+    - name: Création du fichier scores.txt initial
+      file:
+        path: /srv/olympe/scores/scores.txt
+        state: touch
+        mode: '0644'
+        owner: smbscores
+        group: smbscores 

@@ -1,0 +1,22 @@
+Crée:
+- L'utilisateur Hadès
+- Une OU ENFERS dont Hadès à un généricall (il doit avoir plein pouvoir sur tout ce qui ce trouve dans cette OU, je ne sais pas si le généric all suffit.)
+- Une OU TARTARE dans l'OU ENFERS
+- Un groupe TITANS-BANNIS dans l'OU TARETARE.
+- Groupe ELYSEE avec des heros morts dedans.
+- Les titans bannis dans le groupe TITANTS-BANNIS, tous désactivé
+│       ├── User: CRONOS (désactivé)
+│       ├── User: IAPETOS (désactivé)
+│       ├── User: COEUS (désactivé)
+│       ├── User: HYPERION (désactivé)
+│       └── User: KRIOS (désactivé)
+- Un
+- Le service gmsa svc-thunderbolt doit avoir avec un WriteDACL sur le domaine pantheon.god
+- CRONOS est dans les groupes "Remote Desktop Users" et "Remote Managers Users"
+- Tache planifier en tant que Athena qui execute un script dans le dossier nous permet de devenir Athena
+- Athena fessant partie du groupe OLYMPE-SERVICES-MANAGERS, elle est capable de lire le mdp du gmsa svc-thunderbolt, avec ce dernier on pourras ensuite faire un dcsync.
+
+
+
+
+

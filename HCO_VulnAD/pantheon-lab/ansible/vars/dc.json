@@ -98,23 +98,23 @@
                 }
             },
             "acls" : {
-                "GenericWrite_ImmortalHeroes_Heroes" : {
+                "WriteOwner_ImmortalHeroes_Heroes-TITANTS-BANNIS" : {
                     "for": "OLYMPE-IMORTAL-HEROS",
-                    "to": "OLYMPE-HEROS",
-                    "right": "GenericWrite",
+                    "to": "TITANS-BANNIS",
+                    "right": "WriteOwner",
                     "inheritance": "None"
                 },
-                "GenericAll_Hades_Enfers" : {
+                "GenericAll_Hades_Enfers-OU_ENFERS" : {
                     "for": "hades",
                     "to": "ENFERS",
                     "right": "GenericAll",
                     "inheritance": "All"
                 },
-                "WriteDACL_Thunderbolt_Domain" : {
+                "GenericWrite_Thunderbolt_Domain-OLYMPE-GODS" : {
                     "for": "svc_thunderB$",
-                    "to": "DC=pantheon,DC=god",
-                    "right": "GenericAll",
-                    "inheritance": "None"
+                    "to": "OLYMPE-GODS",
+                    "right": "GenericWrite",
+                    "inheritance": "All"
                 }
             },
             "users" : {
@@ -123,7 +123,7 @@
                     "surname" : "olympus",
                     "password" : "Th3und3rK1ng!2024",
                     "description" : "Je suis Zeus, le roi de l'Olympe, le maître incontesté du ciel, de la foudre et du tonnerre.",
-                    "groups" : ["Domain Admins", "Enterprise Admins", "OLYMPE-GODS"],
+                    "groups" : ["Domain Admins", "Enterprise Admins"],
                     "path" : "CN=Users,DC=pantheon,DC=god"
                 },
                 "hera" : {
@@ -262,14 +262,6 @@
                     "groups" : ["HERO-MORT"],
                     "path" : "OU=ELYSEE,OU=ENFERS,DC=pantheon,DC=god"
                 },
-                "hercule" : {
-                    "firstname" : "hercule",
-                    "surname" : "zeus son",
-                    "password" : "Tw3lv3L@b0rs!2024",
-                    "description" : "Fils de Zeus et d'Alcmène",
-                    "groups" : ["HERO-MORT"],
-                    "path" : "OU=ELYSEE,OU=ENFERS,DC=pantheon,DC=god"
-                },
                 "asclepios" : {
                     "firstname" : "asclepios",
                     "surname" : "apollo",
@@ -346,6 +338,38 @@
                     "groups" : ["TITANS-BANNIS"],
                     "path" : "OU=TARTARE,OU=ENFERS,DC=pantheon,DC=god",
                     "enabled" : false
+                }
+            },
+            "ServiceAccounts" : {
+                "smbscores" : {
+                    "firstname" : "smbscores",
+                    "surname" : "smbscr",
+                    "password" : "Sc0r3sS3rv1c3!2024",
+                    "description" : "Compte de service pour la synchronisation des scores",
+                    "path" : "CN=Users,DC=pantheon,DC=god",
+                    "ServicePrincipalName" : ["SMB/scores", "SMB/scores.pantheon.god"]
+                },
+                "hercule" : {
+                    "firstname" : "hercule",
+                    "surname" : "zeus son",
+                    "password" : "Worksucks!",
+                    "description" : "Fils de Zeus et d'Alcmène, héros des 12 travaux",
+                    "path" : "CN=Users,DC=pantheon,DC=god",
+                    "ServicePrincipalName" : [
+                        "LABOR/NemeanLion",
+                        "LABOR/LerneanHydra",
+                        "LABOR/CeryneianHind",
+                        "LABOR/ErymanthianBoar",
+                        "LABOR/AugeanStables",
+                        "LABOR/StymphalianBirds",
+                        "LABOR/CretanBull",
+                        "LABOR/MaresOfDiomedes",
+                        "LABOR/BeltOfHippolyta",
+                        "LABOR/CattleOfGeryon",
+                        "LABOR/ApplesOfHesperides",
+                        "LABOR/Cerberus"
+                    ],
+                    "groups" : ["OLYMPE-IMORTAL-HEROS"]
                 }
             },
             "groups" : {

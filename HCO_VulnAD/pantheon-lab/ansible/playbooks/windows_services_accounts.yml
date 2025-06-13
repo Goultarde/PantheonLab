@@ -1,0 +1,29 @@
+---
+- import_playbook: windows_config.yml
+
+- name: Configuration des comptes de service Windows
+  hosts: pantheon-dc01
+  gather_facts: yes
+  vars:
+    domain: "{{ lab.domains.keys() | first }}"
+    domain_config: "{{ lab.domains[domain] }}"
+
+  tasks:
+    - name: Création des comptes de service
+      microsoft.ad.user:
+        name: "{{ item.key }}"
+        firstname: "{{ item.value.firstname }}"
+        surname: "{{ item.value.surname }}"
+        password: "{{ item.value.password }}"
+        description: "{{ item.value.description }}"
+        path: "{{ item.value.path }}"
+        state: present
+        attributes:
+          set:
+#            userAccountControl: 4096  # SERVICE_ACCOUNT flag
+            servicePrincipalName: "{{ item.value.ServicePrincipalName }}"
+        groups: 
+          set:
+            "{{ item.value.groups | default([]) | join(',') }}"
+      loop: "{{ domain_config.ServiceAccounts | dict2items }}"
+      when: item.value.ServicePrincipalName is defined 

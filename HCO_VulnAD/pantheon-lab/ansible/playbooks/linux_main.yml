@@ -1,4 +1,5 @@
 - import_playbook: linux_setup-locale.yml
 - import_playbook: linux_wordpress.yml
 - import_playbook: linux_userflag.yml
+- import_playbook: linux_win_initial_acces.yml
 

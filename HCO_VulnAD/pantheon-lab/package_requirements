@@ -1,0 +1,4 @@
+ansible
+vagrant
+pip install pywinrm
+ansible-galaxy collection install trippsc2.adcs
