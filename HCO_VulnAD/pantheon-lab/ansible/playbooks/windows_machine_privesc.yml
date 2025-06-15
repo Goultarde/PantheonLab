@@ -1,0 +1,22 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+
+- import_playbook: windows_coliseum.yml
+
+- import_playbook: windows_cronos_access.yml
+
+- import_playbook: windows_coliseum_acls.yml
+
+- name: Afficher un résumé de la configuration
+  hosts: pantheon-dc01
+  tasks:
+    - name: Résumé de la configuration
+      debug:
+        msg: |
+          Configuration terminée :
+          - Répertoire C:\coliseum créé
+          - Tâche planifiée configurée pour Athena
+          - Accès RDP et WinRM configurés pour Cronos
+          - Droits complets sur C:\coliseum pour Cronos 

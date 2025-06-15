@@ -1,0 +1,15 @@
+---
+# Variables de connexion Windows
+hostname: "{{ lab.hosts.dc01.hostname }}"
+domain: "{{ lab.hosts.dc01.domain }}"
+domain_username: "{{ domain }}\\Administrator"
+domain_password: "{{ lab.hosts.dc01.local_admin_password }}"
+domain_server: "{{ lab.hosts.dc01.hostname }}.{{ domain }}"
+
+# Variables spécifiques au domaine
+ad_users: "{{ lab.domains[domain].users }}"
+ad_ou: "{{ lab.domains[domain].organisation_units }}"
+ad_groups: "{{ lab.domains[domain].groups }}"
+gmsa: "{{ lab.domains[domain].gmsa }}"
+acls: "{{ lab.domains[domain].acls }}"
+ServiceAccounts: "{{ lab.domains[domain].ServiceAccounts }}"

@@ -1,0 +1,22 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+  
+- name: Configuration des groupes et utilisateurs de l'Olympe
+  hosts: pantheon-dc01
+  tasks:
+    - name: Créer les groupes du domaine
+      microsoft.ad.group:
+        name: "{{ item.key }}"
+        path: "{{ item.value.path }}"
+        scope: "{{ item.value.type | default('global') }}"
+        category: security
+        description: "{{ item.value.description | default('') }}"
+        state: present
+        domain_username: "{{ domain_username }}"
+        domain_password: "{{ domain_password }}"
+        domain_server: "{{ domain_server }}"
+      with_dict: "{{ ad_groups }}"
+      register: groups_creation
+      loop_control:
+        label: "{{ item.key }}"

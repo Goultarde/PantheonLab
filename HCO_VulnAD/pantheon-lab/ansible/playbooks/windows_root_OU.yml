@@ -1,0 +1,17 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+- name: Configuration des groupes et utilisateurs de l'Olympe
+  hosts: pantheon-dc01
+  tasks:
+    - name: Créer les OUs de premier niveau
+      microsoft.ad.ou:
+        name: "{{ item.key }}"
+        path: "{{ lab.hosts.dc01.path }}"
+        description: "{{ item.value.description }}"
+        state: present
+      with_dict: "{{ ad_ou }}"
+      register: ou_root_creation
+      loop_control:
+        label: "{{ item.key }}"

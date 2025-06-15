@@ -1,0 +1,9 @@
+- name: Créer les OUs enfants de {{ parent.key }}
+  microsoft.ad.ou:
+    name: "{{ item.key }}"
+    path: "{{ item.value.path | regex_replace('^OU=[^,]+,(.+)$', '\\1') }}"
+    description: "{{ item.value.description }}"
+    state: present
+  loop: "{{ parent.value.children | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}" 

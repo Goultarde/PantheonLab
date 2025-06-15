@@ -1,0 +1,33 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+- name: Désactiver Windows Defender
+  hosts: pantheon-dc01
+  tasks:
+    - name: Désactiver la protection en temps réel de Windows Defender
+      ansible.windows.win_powershell:
+        script: |
+          Set-MpPreference -DisableRealtimeMonitoring $true
+          Set-MpPreference -MAPSReporting Disabled
+          Set-MpPreference -SubmitSamplesConsent NeverSend
+          Set-MpPreference -DisableBehaviorMonitoring $true
+          Set-MpPreference -DisableIntrusionPreventionSystem $true
+          Set-MpPreference -DisableScriptScanning $true
+
+    - name: Désactiver la protection fournie par le cloud
+      ansible.windows.win_powershell:
+        script: Set-MpPreference -EnableCloudProtection Disabled
+
+    - name: Désactiver le service Windows Defender (WinDefend)
+      ansible.windows.win_service:
+        name: WinDefend
+        state: stopped
+        start_mode: disabled
+      become: yes
+      ignore_errors: true
+
+    - name: Désactiver la protection anti-falsification (Tamper Protection) (Windows 10 1903+)
+      ansible.windows.win_powershell:
+        script: |
+          Set-MpPreference -DisableTamperProtection $true

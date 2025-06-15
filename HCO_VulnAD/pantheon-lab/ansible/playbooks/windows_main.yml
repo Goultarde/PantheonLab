@@ -1,9 +1,12 @@
 ---
+- import_playbook: windows_config.yml
+
 - name: Configuration du domaine Active Directory
   hosts: all
   gather_facts: true
 
 - import_playbook: windows_adds.yml
+- import_playbook: windows_disable_defender.yml
 - import_playbook: windows_dns.yml
 - import_playbook: windows_adcs_role.yml
 - import_playbook: windows_domain_objects.yml

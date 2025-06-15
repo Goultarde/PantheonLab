@@ -1,11 +1,24 @@
 - name: "Read data files"
-  hosts: domain:extensions
+  hosts: domain:extensions #Dans le fichier inventory
   connection: local
   vars_files:
     - "{{data_path}}/dc.json"
+    - "{{data_path}}/windows_common.yml"
   tasks:
-    - name: save the Json data to a Variable as a Fact
+    - name: save all variables as Facts
       set_fact:
         lab: "{{lab}}"
+        windows_config_loaded: true
+        hostname: "{{ hostname }}"
+        domain: "{{ domain }}"
+        domain_username: "{{ domain_username }}"
+        domain_password: "{{ domain_password }}"
+        domain_server: "{{ domain_server }}"
+        ad_users: "{{ ad_users }}"
+        ad_ou: "{{ ad_ou }}"
+        ad_groups: "{{ ad_groups }}"
+        gmsa: "{{ gmsa }}"
+        acls: "{{ acls }}"
+        ServiceAccounts: "{{ ServiceAccounts }}"
         cacheable: yes
       run_once: true

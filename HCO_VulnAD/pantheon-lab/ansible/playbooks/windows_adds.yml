@@ -1,5 +1,6 @@
 ---
 - import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
 
 
 - name: Configuration AD DS

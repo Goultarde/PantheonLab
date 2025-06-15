@@ -1,0 +1,29 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+- name: Configuration des accès pour Cronos
+  hosts: pantheon-dc01
+  tasks:
+    - name: Ajouter Cronos au groupe Remote Desktop Users
+      microsoft.ad.group:
+        identity: "Remote Desktop Users"
+        members:
+          add:
+            - "PANTHEON\\cronos"
+        state: present
+
+    - name: Ajouter Cronos au groupe Remote Management Users
+      microsoft.ad.group:
+        identity: "Remote Management Users"
+        members:
+          add:
+            - "PANTHEON\\cronos"
+        state: present
+
+    - name: Accorder le droit de connexion à distance aux utilisateurs du Bureau à distance
+      win_user_right:
+        name: SeRemoteInteractiveLogonRight
+        users:
+          - "Remote Desktop Users"
+        action: add

@@ -1,0 +1,42 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+- name: Configuration du Colisée
+  hosts: pantheon-dc01
+  tasks:
+    - name: Créer le répertoire C:/coliseum
+      win_file:
+        path: C:/coliseum
+        state: directory
+        owner: PANTHEON\athena
+        mode: '0750'
+
+    - name: Vérifier l'existence du script shell.ps1
+      win_file:
+        path: C:\coliseum\shell.ps1
+        state: file
+      register: script_check
+
+    - name: Créer la tâche planifiée pour Athena
+      ansible.windows.win_powershell:
+        script: |
+          $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -NoProfile echo test > C:\coliseum\test.txt"
+          $repeat = (New-TimeSpan -Minutes 1)
+          $taskName = "ColiseumTasks13"
+          $user = "PANTHEON\athena"
+          $password = "Str@t3g1cM1nd!2024"
+
+          $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval $repeat
+          $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopOnIdleEnd
+
+          $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName }
+          if($taskExists) {
+              Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+          }
+          Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -User $user -Password $password -Settings $settings
+#        logon_type: password
+#        run_level: highest
+#        state: present
+#        enabled: yes
+#        force: yes 

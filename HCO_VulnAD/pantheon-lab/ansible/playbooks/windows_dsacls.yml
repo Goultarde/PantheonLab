@@ -1,0 +1,95 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+- name: Configuration des ACLs sur les objets Active Directory
+  hosts: pantheon-dc01
+  gather_facts: true
+  tasks:
+    - name: Configurer les ACLs
+      ansible.windows.win_powershell:
+        script: |
+          [CmdletBinding()]
+          param (
+              [String]
+              $for,
+
+              [String[]]
+              $to,
+
+              [String]
+              $right,
+
+              [String]
+              $inheritance
+          )
+          Import-Module ActiveDirectory
+          Set-Location AD:
+          
+          $aclValues = [enum]::GetNames([System.DirectoryServices.ActiveDirectoryRights])
+          $aclExtendValues = 'Ext-User-Force-Change-Password', 'Ext-Self-Self-Membership', 'Ext-Write-Self-Membership', 'Ext-ManageCA'
+          
+          # Récupération du SID de l'identité
+          if ($for.StartsWith("NT AUTHORITY")) {
+            $forSID = New-Object System.Security.Principal.NTAccount "$for"
+          } else {
+            $forSID = New-Object System.Security.Principal.SecurityIdentifier (Get-ADObject -Filter "SamAccountName -eq '$for'" -Properties objectSID).objectSID
+          }
+
+          $type = [System.Security.AccessControl.AccessControlType] "Allow"
+          $inheritanceType = [System.DirectoryServices.ActiveDirectorySecurityInheritance] $inheritance
+
+          $aclExtendedValueRightGUID = @{
+            "Ext-User-Force-Change-Password" = @("ExtendedRight","00299570-246d-11d0-a768-00aa006e0529")
+            "Ext-Write-Self-Membership" = @("WriteProperty","bf9679c0-0de6-11d0-a285-00aa003049e2")
+            "Ext-Self-Self-Membership" = @("Self","bf9679c0-0de6-11d0-a285-00aa003049e2")
+            "Ext-ManageCA" = @("ExtendedRight","18e470eb-9b98-47c5-896e-146c5c77100d")
+          }
+
+          $Ansible.Changed = $false
+          foreach ($target in $to) {
+            # Récupération de l'objet cible
+            try {
+              $objAcl = get-acl -Path "$target" -ErrorAction Stop
+              $objOU = $target
+              $objFound = $true
+            } catch [System.Management.Automation.ItemNotFoundException] {
+              $objFound = $false
+            }
+
+            if (-not $objFound) {
+              $extra_args = @{}
+              if ($target -match "\\") {
+                $extra_args.Server = $target.Split("\")[0]
+                $target = $target.Split("\")[1]
+              }
+              $toObj = Get-ADObject -Filter "SamAccountName -eq '$target'" @extra_args
+              $objOU = ($toObj).DistinguishedName
+              $objAcl = get-acl -Path "$objOU"
+            }
+
+            if ($aclValues.contains($right)) {
+              $adRight = [System.DirectoryServices.ActiveDirectoryRights] $right
+              $ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $forSID,$adRight,$type,$inheritanceType
+            }
+            if ($aclExtendValues.contains($right)) {
+              $extendedRightGUID = $aclExtendedValueRightGUID[$right][1]
+              $extright = $aclExtendedValueRightGUID[$right][0]
+              $adRight = [System.DirectoryServices.ActiveDirectoryRights] $extright
+              $ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $forSID,$extright,$type,$extendedRightGUID,$inheritanceType
+            }
+            if ($ace) {
+              $objAcl.AddAccessRule($ace)
+              Set-Acl -AclObject $objAcl -path "$objOU"
+              $Ansible.Changed = $true
+            }
+          }
+        parameters:
+          for: "{{ item.value.for }}"
+          to: "{{ item.value.to }}"
+          right: "{{ item.value.right }}"
+          inheritance: "{{ item.value.inheritance }}"
+      with_dict: "{{ acls }}"
+      register: acl_setup
+      loop_control:
+        label: "{{ item.key }}"

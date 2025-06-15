@@ -8,6 +8,7 @@ all:
             pantheon-dc01:
               ansible_host: 192.168.56.11
               data_path: "{{ playbook_dir }}/../vars"
+              playbook_path: "{{ playbook_dir }}" 
   vars:
     ansible_user: Administrator
     ansible_password: Pantheon@2024
@@ -15,3 +16,4 @@ all:
     ansible_winrm_server_cert_validation: ignore
     ansible_winrm_transport: ntlm
     ansible_winrm_port: 5985 
+
