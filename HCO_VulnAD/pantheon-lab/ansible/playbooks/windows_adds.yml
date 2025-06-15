@@ -64,15 +64,17 @@
 #     when: check_domain_controller.changed
 
     - name: S'assurer que l'administrateur est dans le groupe Enterprise Admins
-      community.windows.win_domain_group_membership:
-        name: "Enterprise Admins"
+      microsoft.ad.group:
+        identity: "Enterprise Admins"
         members:
-          - Administrator
+          add:
+            - Administrator
         state: present
 
     - name: S'assurer que l'administrateur est dans le groupe Domain Admins
-      community.windows.win_domain_group_membership:
-        name: "Domain Admins"
+      microsoft.ad.group:
+        identity: "Domain Admins"
         members:
-          - Administrator
+          add:
+            - Administrator
         state: present 
