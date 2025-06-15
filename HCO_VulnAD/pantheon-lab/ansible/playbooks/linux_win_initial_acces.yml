@@ -21,7 +21,7 @@
       copy:
         src: scripts/score_update.sh
         dest: /opt/scores/score_update.sh
-        mode: '0755'
+        mode: '0740'
         owner: smbscores
         group: smbscores
 
@@ -29,14 +29,14 @@
       file:
         path: /srv/olympe/scores
         state: directory
-        mode: '0755'
+        mode: '0750'
         owner: smbscores
         group: smbscores
 
     - name: Création du fichier scores.txt initial
       file:
-        path: /srv/olympe/scores/scores.txt
+        path: /srv/pantheon.god/scores/scores.txt
         state: touch
-        mode: '0644'
+        mode: '0660'
         owner: smbscores
         group: smbscores 
