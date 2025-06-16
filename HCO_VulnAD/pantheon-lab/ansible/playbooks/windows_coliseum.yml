@@ -5,36 +5,82 @@
 - name: Configuration du Colisée
   hosts: pantheon-dc01
   tasks:
-    - name: Créer le répertoire C:/coliseum
+    - name: Créer le répertoire C:\coliseum
       win_file:
-        path: C:/coliseum
+        path: C:\coliseum
         state: directory
-        owner: PANTHEON\athena
-        mode: '0750'
+
+    - name: Change owner of path
+      ansible.windows.win_owner:
+        path: C:\coliseum
+        user: "PANTHEON\\athena"
+        recurse: true
+
+    - name: Donner les droits à cronos
+      win_acl:
+        path: C:\coliseum
+        user: "PANTHEON\\cronos"
+        rights: FullControl
+        type: allow
+        state: present
+        inherit: ContainerInherit,ObjectInherit
 
     - name: Vérifier l'existence du script shell.ps1
       win_file:
         path: C:\coliseum\shell.ps1
-        state: file
+        state: touch
       register: script_check
 
     - name: Créer la tâche planifiée pour Athena
-      ansible.windows.win_powershell:
-        script: |
-          $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -NoProfile echo test > C:\coliseum\test.txt"
-          $repeat = (New-TimeSpan -Minutes 1)
-          $taskName = "ColiseumTasks13"
-          $user = "PANTHEON\athena"
-          $password = "Str@t3g1cM1nd!2024"
+      community.windows.win_scheduled_task:
+        name: AthenaScript
+        description: Run a PowerShell script
+        actions:
+          - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+            arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\coliseum\shell.ps1
+        triggers:
+          - type: registration
+            repetition:
+              interval: PT1M
+              duration: PT5M
+              stop_at_duration_end: true
+      tags: 
+        - createsch
 
-          $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval $repeat
-          $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopOnIdleEnd
 
-          $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName }
-          if($taskExists) {
-              Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
-          }
-          Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -User $user -Password $password -Settings $settings
+    - name: Update Local Security Policy to allow users to run scheduled tasks
+      ansible.windows.win_user_right:
+        name: SeBatchLogonRight
+        users:
+          - PANTHEON\athena
+        action: add
+
+    - name: Change above task to run under a domain user account, storing the passwords
+      community.windows.win_scheduled_task:
+        name: AthenaScript
+        username: PANTHEON\athena
+        password: "Str@t3g1cM1nd!2024"
+        logon_type: password
+
+
+#   - name: Créer la tâche planifiée pour Athena
+#     ansible.windows.win_powershell:
+#       script: |
+#         $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -NoProfile echo test > C:\coliseum\test.txt"
+#         $repeat = (New-TimeSpan -Minutes 1)
+#         $taskName = "ColiseumTasks13"
+#         $user = "PANTHEON\athena"
+#         $password = "Str@t3g1cM1nd!2024"
+
+#         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval $repeat
+#         $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopOnIdleEnd
+
+#         $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName }
+#         if($taskExists) {
+#             Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+#         }
+#         Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -User $user -Password $password -Settings $settings
+
 #        logon_type: password
 #        run_level: highest
 #        state: present

@@ -21,13 +21,13 @@
       copy:
         src: scripts/score_update.sh
         dest: /opt/scores/score_update.sh
-        mode: '0740'
+        mode: '0750'
         owner: smbscores
         group: smbscores
 
     - name: Création du répertoire pour les scores
       file:
-        path: /srv/olympe/scores
+        path: /srv/pantheon.god/scores
         state: directory
         mode: '0750'
         owner: smbscores
@@ -40,3 +40,7 @@
         mode: '0660'
         owner: smbscores
         group: smbscores 
+    - name: Ajout de l'utilisateur hermes au groupe smbscores
+      ansible.builtin.user:
+        name: hermes
+        groups: smbscores

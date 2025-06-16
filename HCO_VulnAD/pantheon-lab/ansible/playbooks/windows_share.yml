@@ -1,0 +1,20 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+- name: Configuration du share Scores 
+  hosts: pantheon-dc01
+  tasks:
+    - name: Créer le dossier Scores
+      win_file:
+        path: C:\shares\scores
+        state: directory
+
+    - name: Ajout du share Scores
+      ansible.windows.win_share:
+        name: Scores
+        description: Ajout des scores des jeux
+        path: C:\shares\scores
+        list: false
+        full: Administrators,PANTHEON\smbscores
+        read: OLYMPE-GODS

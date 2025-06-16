@@ -123,7 +123,7 @@
                     "surname" : "olympus",
                     "password" : "Th3und3rK1ng!2024",
                     "description" : "Je suis Zeus, le roi de l'Olympe, le maître incontesté du ciel, de la foudre et du tonnerre.",
-                    "groups" : ["Domain Admins", "Enterprise Admins"],
+                    "groups" : ["Domain Admins", "Enterprise Admins", "OLYMPE-GODS"],
                     "path" : "CN=Users,DC=pantheon,DC=god"
                 },
                 "hera" : {

@@ -10,5 +10,6 @@
 - import_playbook: windows_dns.yml
 - import_playbook: windows_adcs_role.yml
 - import_playbook: windows_domain_objects.yml
+- import_playbook: windows_share.yml
 
 
