@@ -10,13 +10,13 @@
         path: C:\coliseum
         state: directory
 
-    - name: Change owner of path
+    - name: Changer le  propriétaire du path coliseum
       ansible.windows.win_owner:
         path: C:\coliseum
         user: "PANTHEON\\athena"
         recurse: true
 
-    - name: Donner les droits à cronos
+    - name: Donner tout les droits à cronos sur le répertoire coliseum
       win_acl:
         path: C:\coliseum
         user: "PANTHEON\\cronos"
@@ -31,6 +31,13 @@
         state: touch
       register: script_check
 
+    - name: Update Local Security Policy to allow users to run scheduled tasks
+      ansible.windows.win_user_right:
+        name: SeBatchLogonRight
+        users:
+          - PANTHEON\athena
+        action: add
+
     - name: Créer la tâche planifiée pour Athena
       community.windows.win_scheduled_task:
         name: AthenaScript
@@ -42,47 +49,19 @@
           - type: registration
             repetition:
               interval: PT1M
-              duration: PT5M
-              stop_at_duration_end: true
+        username: PANTHEON\athena
+        password: "Str@t3g1cM1nd!2024"
+        logon_type: s4u
+#       logon_type: password
       tags: 
         - createsch
 
 
-    - name: Update Local Security Policy to allow users to run scheduled tasks
-      ansible.windows.win_user_right:
-        name: SeBatchLogonRight
-        users:
-          - PANTHEON\athena
-        action: add
-
-    - name: Change above task to run under a domain user account, storing the passwords
-      community.windows.win_scheduled_task:
-        name: AthenaScript
-        username: PANTHEON\athena
-        password: "Str@t3g1cM1nd!2024"
-        logon_type: password
+#   - name: Change above task to run under a domain user account, storing the passwords
+#     community.windows.win_scheduled_task:
+#       name: AthenaScript
+#       username: PANTHEON\athena
+#       password: "Str@t3g1cM1nd!2024"
+#       logon_type: password
 
 
-#   - name: Créer la tâche planifiée pour Athena
-#     ansible.windows.win_powershell:
-#       script: |
-#         $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -NoProfile echo test > C:\coliseum\test.txt"
-#         $repeat = (New-TimeSpan -Minutes 1)
-#         $taskName = "ColiseumTasks13"
-#         $user = "PANTHEON\athena"
-#         $password = "Str@t3g1cM1nd!2024"
-
-#         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval $repeat
-#         $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopOnIdleEnd
-
-#         $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName }
-#         if($taskExists) {
-#             Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
-#         }
-#         Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -User $user -Password $password -Settings $settings
-
-#        logon_type: password
-#        run_level: highest
-#        state: present
-#        enabled: yes
-#        force: yes 

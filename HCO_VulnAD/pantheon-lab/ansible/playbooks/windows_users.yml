@@ -17,6 +17,7 @@
         groups: 
           set:
             "{{ item.value.groups | join(',') }}"
+        enabled: "{{ item.value.enabled | default(omit) }}"
       with_dict: "{{ ad_users }}"
       register: users_creation
       loop_control:
