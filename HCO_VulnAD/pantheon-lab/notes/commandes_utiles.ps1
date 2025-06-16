@@ -123,3 +123,12 @@ Get-ADObject `
   Format-Table Name, rightsGuid -AutoSize
 
 -------------------------------------------------------------------------------------------------------------------------------------------
+
+#Receuilleur des infos sur une tache planifier
+Get-ScheduledTaskInfo -TaskName "AthenaScript"
+# Supprimer une tâche planifier 
+Unregister-ScheduledTask -TaskName "AthenaScript" -Confirm:$false
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+
