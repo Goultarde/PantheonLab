@@ -98,10 +98,10 @@
                 }
             },
             "acls" : {
-                "WriteOwner_ImmortalHeroes_Heroes-TITANTS-BANNIS" : {
+                "GenericWrite_ImmortalHeroes_Heroes-TITANTS-BANNIS_users" : {
                     "for": "OLYMPE-IMORTAL-HEROS",
-                    "to": ["TITANS-BANNIS"],
-                    "right": "WriteOwner",
+                    "to": ["cronos","iapetos","coeus","hyperion","krios"],
+                    "right": "GenericWrite",
                     "inheritance": "None"
                 },
                 "GenericAll_Hades_Enfers-OU_ENFERS" : {
@@ -112,7 +112,7 @@
                 },
                 "GenericWrite_Thunderbolt_Domain-OLYMPE-GODS" : {
                     "for": "svc_thunderB$",
-                    "to": ["hera","poseidon","demeter","athena","apollo","artemis","ares","aphrodite","hephaistos","hermes","dionysos","hades","fakegod"],
+                    "to": ["hera","poseidon","demeter","athena","apollo","artemis","ares","aphrodite","hephaistos","hermes","dionysos","hades"],
                     "right": "GenericWrite",
                     "inheritance": "None"
                 }

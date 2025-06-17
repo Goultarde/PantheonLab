@@ -4,7 +4,7 @@
 
 
 - import_playbook: windows_coliseum.yml
-- import_playbook: windows_cronos_access.yml
+- import_playbook: windows_rdp-winrm_access.yml
 
 - name: Afficher un résumé de la configuration
   hosts: pantheon-dc01

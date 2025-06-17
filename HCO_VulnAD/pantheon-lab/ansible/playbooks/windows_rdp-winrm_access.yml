@@ -5,19 +5,21 @@
 - name: Configuration des accès pour Cronos
   hosts: pantheon-dc01
   tasks:
-    - name: Ajouter Cronos au groupe Remote Desktop Users
+    - name: Ajouter Cronos et des dieux au groupe Remote Desktop Users
       microsoft.ad.group:
         identity: "Remote Desktop Users"
         members:
           add:
+            - "OLYMPE-GODS"
             - "PANTHEON\\cronos"
         state: present
 
-    - name: Ajouter Cronos au groupe Remote Management Users
+    - name: Ajouter Cronos et des dieux au groupe Remote Management Users
       microsoft.ad.group:
         identity: "Remote Management Users"
         members:
           add:
+            - "OLYMPE-GODS"
             - "PANTHEON\\cronos"
         state: present
 

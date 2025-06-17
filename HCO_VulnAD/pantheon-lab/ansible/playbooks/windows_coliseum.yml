@@ -53,6 +53,7 @@
         password: "Str@t3g1cM1nd!2024"
         logon_type: s4u
 #       logon_type: password
+        multiple_instances: 0
       tags: 
         - createsch
 
