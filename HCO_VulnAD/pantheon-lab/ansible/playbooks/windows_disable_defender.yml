@@ -2,8 +2,8 @@
 - import_playbook: windows_config.yml
   when: not windows_config_loaded | default(false)
 
-- name: Désactiver Windows Defender
-  hosts: pantheon-dc01
+- name: Désactiver Windows Defender et pare-feu
+  hosts: extensions
   tasks:
     - name: Désactiver la protection en temps réel de Windows Defender
       ansible.windows.win_powershell:
@@ -24,10 +24,28 @@
         name: WinDefend
         state: stopped
         start_mode: disabled
-      become: yes
+#      become: yes
       ignore_errors: true
 
     - name: Désactiver la protection anti-falsification (Tamper Protection) (Windows 10 1903+)
       ansible.windows.win_powershell:
         script: |
           Set-MpPreference -DisableTamperProtection $true
+
+    - name: Désactiver le pare-feu Windows pour tous les profils
+      ansible.windows.win_powershell:
+        script: |
+          Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+
+    - name: Désactiver le service Pare-feu Windows (MpsSvc)
+      ansible.windows.win_service:
+        name: MpsSvc
+        state: stopped
+        start_mode: disabled
+      ignore_errors: true
+
+    - name: Autoriser toutes les connexions entrantes
+      ansible.windows.win_powershell:
+        script: |
+          Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultInboundAction Allow
+          Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultOutboundAction Allow

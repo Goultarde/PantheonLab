@@ -1,0 +1,26 @@
+---
+- name: Synchronisation de l'heure et du fuseau horaire sur les machines Windows
+  hosts: extensions
+  gather_facts: no
+  tasks:
+    - name: Définir le fuseau horaire sur Central Standard Time
+      win_timezone:
+        timezone: "Central Standard Time"
+
+    - name: Forcer la synchronisation de l'heure avec la hiérarchie du domaine
+      win_command: w32tm /config /syncfromflags:domhier /update
+
+    - name: Redémarrer le service de temps Windows
+      win_service:
+        name: w32time
+        state: restarted
+
+    - name: Forcer la resynchronisation de l'heure
+      win_command: w32tm /resync
+      register: resync_result
+      failed_when: resync_result.rc != 0 and 'The computer did not resync because no time data was available.' not in resync_result.stderr
+      ignore_errors: yes
+
+    - name: Afficher le résultat de la resynchronisation
+      debug:
+        var: resync_result.stdout 

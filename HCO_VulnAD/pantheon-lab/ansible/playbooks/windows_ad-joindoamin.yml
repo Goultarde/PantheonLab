@@ -2,11 +2,11 @@
 - import_playbook: windows_config.yml
   when: not windows_config_loaded | default(false)
 
-- name: Configuration du CA01
-  hosts: pantheon-ca01
+- name: Configuration de la machine pantheon-enfer
+  hosts: pantheon-enfer
   gather_facts: true
   vars:
-    server_type: "ca01"
+    server_type: "enfers"
     domain: "{{ lab.hosts[server_type].domain }}"
     domain_admin_user: "{{ domain }}\\administrator"
     domain_admin_password: "{{ lab.hosts[server_type].local_admin_password }}"

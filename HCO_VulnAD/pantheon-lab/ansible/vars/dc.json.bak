@@ -20,7 +20,7 @@
                 ]
             }
         },
-        "enfers" : {
+        "tartare" : {
             "hostname" : "pantheon-enfer",
             "type" : "client",
             "domain_admin_password": "Pantheon@2024",
@@ -293,7 +293,7 @@
                     "surname" : "underworld",
                     "password" : "D3@thL0rd!2024",
                     "description" : "Je suis Hadès, le souverain des Enfers, le maître du royaume des morts.",
-                    "groups" : ["OLYMPE-GODS","Remote Desktop Users"],
+                    "groups" : ["OLYMPE-GODS"],
                     "path" : "CN=Users,DC=pantheon,DC=god"
                 },
                 "cronos" : {

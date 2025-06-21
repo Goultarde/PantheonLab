@@ -2,28 +2,20 @@
 - import_playbook: windows_config.yml
   when: not windows_config_loaded | default(false)
 
-- name: Configuration des accès pour Cronos
-  hosts: pantheon-dc01
+- name: Autoriser l'accès distant RDP aux utilisateurs du domaine
+  hosts:
+    - pantheon-dc01
+    - pantheon-enfer
   tasks:
-    - name: Ajouter Cronos et des dieux au groupe Remote Desktop Users
-      microsoft.ad.group:
-        identity: "Remote Desktop Users"
+    - name: Ajouter les utilisateurs du domaine au groupe local Remote Desktop Users
+      win_group_membership:
+        name: "Remote Desktop Users"
         members:
-          add:
-            - "OLYMPE-GODS"
-            - "PANTHEON\\cronos"
+          - "PANTHEON\\cronos"
+          - "OLYMPE-GODS"
         state: present
 
-    - name: Ajouter Cronos et des dieux au groupe Remote Management Users
-      microsoft.ad.group:
-        identity: "Remote Management Users"
-        members:
-          add:
-            - "OLYMPE-GODS"
-            - "PANTHEON\\cronos"
-        state: present
-
-    - name: Accorder le droit de connexion à distance aux utilisateurs du Bureau à distance
+    - name: Accorder le droit de connexion à distance aux membres du groupe Remote Desktop Users
       win_user_right:
         name: SeRemoteInteractiveLogonRight
         users:
