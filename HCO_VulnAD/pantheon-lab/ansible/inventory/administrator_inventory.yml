@@ -14,6 +14,6 @@ all:
     ansible_password: Pantheon@2024
     ansible_connection: winrm
     ansible_winrm_server_cert_validation: ignore
-    ansible_winrm_transport: ntlm
+    ansible_winrm_transport: plaintext
     ansible_winrm_port: 5985 
 

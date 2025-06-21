@@ -131,4 +131,32 @@ Unregister-ScheduledTask -TaskName "AthenaScript" -Confirm:$false
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
+#  Lister tout les spn d'un domaine 
 
+cls
+$search = New-Object DirectoryServices.DirectorySearcher([ADSI]"")
+$search.filter = "(servicePrincipalName=*)"
+
+## You can use this to filter for OU's:
+## $results = $search.Findall() | `
+## ?{ $_.path -like '*OU=whatever,DC=whatever,DC=whatever*' }
+$results = $search.Findall()
+
+foreach( $result in $results ) {
+  $userEntry = $result.GetDirectoryEntry()
+  Write-host "Object Name = " $userEntry.name -backgroundcolor "yellow" -foregroundcolor "black"
+  Write-host "DN = " $userEntry.distinguishedName
+  Write-host "Object Cat. = " $userEntry.objectCategory
+  Write-host "servicePrincipalNames"
+
+  $i=1
+  foreach( $SPN in $userEntry.servicePrincipalName ) {
+    Write-host "SPN ${i} =$SPN"
+    $i+=1
+  }
+  Write-host ""
+}
+
+# Voir les SPN stocker dans l'atribue SPNMappings qui stockes les SPN représenter par l'alias HOST
+
+Get-ADObject -Identity "CN=Directory Service,CN=Windows NT,CN=Services,CN=Configuration,DC=PANTHEON,DC=GOD" -properties sPNMappings
