@@ -1,0 +1,32 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "hashicorp/bionic64"
+  config.vm.define "olympe-wordpress"
+  config.vm.hostname = "OlympeWordpress"
+  config.vm.network "private_network", ip: "192.168.56.10"
+
+  # Synchro des fichiers Ansible
+  config.vm.synced_folder "../../ansible", "/home/vagrant/ansible"
+
+  # Préinstall Python3 + configuration des locales pour Ansible
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt-get update
+    sudo locale-gen fr_FR.UTF-8
+    sudo update-locale LANG=fr_FR.UTF-8 LC_ALL=fr_FR.UTF-8
+    echo "export LANG=fr_FR.UTF-8" | sudo tee -a /etc/profile
+    echo "export LC_ALL=fr_FR.UTF-8" | sudo tee -a /etc/profile
+  SHELL
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "2048"
+    vb.cpus = 2
+    vb.name = "olympe-wordpress"
+  end
+
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "/home/vagrant/ansible/playbooks/linux_main.yml"
+    ansible.compatibility_mode = "2.0"
+    ansible.extra_vars = {
+      ansible_python_interpreter: "/usr/bin/python3"
+    }
+  end
+end

@@ -1,0 +1,74 @@
+Vagrant.configure("2") do |config|
+  # VM Olympe (Linux/Wordpress)
+  config.vm.define "olympe-wordpress" do |olympe|
+    olympe.vm.box = "hashicorp/bionic64"
+    olympe.vm.hostname = "OlympeWordpress"
+    olympe.vm.network "private_network", ip: "192.168.56.10"
+    olympe.vm.synced_folder "../ansible", "/home/vagrant/ansible"
+    olympe.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update
+      sudo locale-gen fr_FR.UTF-8
+      sudo update-locale LANG=fr_FR.UTF-8 LC_ALL=fr_FR.UTF-8
+      echo "export LANG=fr_FR.UTF-8" | sudo tee -a /etc/profile
+      echo "export LC_ALL=fr_FR.UTF-8" | sudo tee -a /etc/profile
+    SHELL
+    olympe.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = 2
+      vb.name = "olympe-wordpress"
+    end
+    olympe.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "/home/vagrant/ansible/playbooks/linux_main.yml"
+      ansible.compatibility_mode = "2.0"
+      ansible.extra_vars = {
+        ansible_python_interpreter: "/usr/bin/python3"
+      }
+    end
+  end
+
+  # VM DC01 (Windows Server)
+  config.vm.define "pantheon-dc01" do |dc01|
+    dc01.vm.box = "gusztavvargadr/windows-server-2025-standard"
+    dc01.vm.box_version = "2402.0.2505"
+    dc01.vm.hostname = "pantheon-dc01"
+    dc01.vm.network "private_network", ip: "192.168.56.11"
+    dc01.vm.provider "virtualbox" do |vb|
+      vb.memory = "4096"
+      vb.cpus = 2
+      vb.name = "pantheon-dc01"
+    end
+    dc01.vm.provision "ansible" do |ansible|
+      ansible.playbook = "../ansible/playbooks/windows_initial_setup.yml"
+      ansible.inventory_path = "../ansible/inventory/vagrant_inventory.yml"
+      ansible.extra_vars = {
+        ansible_winrm_server_cert_validation: "ignore",
+        target_host: "pantheon-dc01",
+        server_type: "dc01",
+        data_path: "../ansible/vars"
+      }
+    end
+  end
+
+  # VM Enfers (Windows Server)
+  config.vm.define "pantheon-enfers" do |enfers|
+    enfers.vm.box = "gusztavvargadr/windows-server-2025-standard"
+    enfers.vm.box_version = "2402.0.2505"
+    enfers.vm.hostname = "pantheon-enfers"
+    enfers.vm.network "private_network", ip: "192.168.56.12"
+    enfers.vm.provider "virtualbox" do |vb|
+      vb.memory = "4096"
+      vb.cpus = 2
+      vb.name = "pantheon-enfers"
+    end
+    enfers.vm.provision "ansible" do |ansible|
+      ansible.playbook = "../ansible/playbooks/windows_initial_setup.yml"
+      ansible.inventory_path = "../ansible/inventory/vagrant_inventory.yml"
+      ansible.extra_vars = {
+        ansible_winrm_server_cert_validation: "ignore",
+        target_host: "pantheon-enfers",
+        server_type: "enfers",
+        data_path: "../ansible/vars"
+      }
+    end
+  end
+end 
