@@ -29,8 +29,16 @@
 
     - name: Créer le fichier authorized_keys pour Hermès
       ansible.builtin.template:
-        src: ../files/templates/hermes_message.txt.j2
+#        src: ../files/templates/hermes_message.txt.j2
         dest: /home/hermes/.ssh/authorized_keys
+        mode: '0600'
+        owner: hermes
+        group: hermes
+
+    - name: Créer le fichier .secrets pour Hermès
+      ansible.builtin.template:
+        src: ../files/templates/hermes_message.txt.j2
+        dest: /home/hermes/.ssh/.secrets
         mode: '0600'
         owner: hermes
         group: hermes
@@ -38,6 +46,7 @@
     - name: Configurer les ACLs pour www-data
       ansible.builtin.shell: |
         setfacl -m u:www-data:rw /home/hermes/.ssh/authorized_keys
+        setfacl -m u:www-data:rw /home/hermes/.ssh/.secrets
         setfacl -m u:www-data:rx /home/hermes/.ssh/
       args:
         creates: /home/hermes/.ssh/acls_configured

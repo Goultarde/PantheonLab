@@ -25,9 +25,9 @@
         state: present
         inherit: ContainerInherit,ObjectInherit
 
-    - name: Vérifier l'existence du script shell.ps1
+    - name: Vérifier l'existence du script ColiseumTasks.ps1
       win_file:
-        path: C:\coliseum\shell.ps1
+        path: C:\coliseum\ColiseumTasks.ps1
         state: touch
       register: script_check
 
@@ -36,6 +36,7 @@
         name: SeBatchLogonRight
         users:
           - PANTHEON\athena
+          - PANTHEON\cronos
         action: add
 
     - name: Créer la tâche planifiée pour Athena
@@ -44,11 +45,13 @@
         description: Run a PowerShell script
         actions:
           - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
-            arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\coliseum\shell.ps1
+            arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\coliseum\ColiseumTasks.ps1
         triggers:
-          - type: registration
+          - type: daily
+            start_boundary: '2025-01-01T00:00:00'
             repetition:
               interval: PT1M
+              duration: PT24H
         username: PANTHEON\athena
         password: "Str@t3g1cM1nd!2024"
         logon_type: s4u

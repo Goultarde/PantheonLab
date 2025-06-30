@@ -2,7 +2,7 @@
 - import_playbook: windows_config.yml
   when: not windows_config_loaded | default(false)
 
-- name: Désactiver Windows Defender et pare-feu
+- name: Désactiver/Réduire les protection, Windows Defender, pare-feu, password policy
   hosts: extensions
   tasks:
     - name: Désactiver la protection en temps réel de Windows Defender
@@ -19,13 +19,13 @@
       ansible.windows.win_powershell:
         script: Set-MpPreference -EnableCloudProtection Disabled
 
-    - name: Désactiver le service Windows Defender (WinDefend)
-      ansible.windows.win_service:
-        name: WinDefend
-        state: stopped
-        start_mode: disabled
+#   - name: Désactiver le service Windows Defender (WinDefend)
+#     ansible.windows.win_service:
+#       name: WinDefend
+#       state: stopped
+#       start_mode: disabled
 #      become: yes
-      ignore_errors: true
+#     ignore_errors: true
 
     - name: Désactiver la protection anti-falsification (Tamper Protection) (Windows 10 1903+)
       ansible.windows.win_powershell:
@@ -37,15 +37,46 @@
         script: |
           Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 
-    - name: Désactiver le service Pare-feu Windows (MpsSvc)
-      ansible.windows.win_service:
-        name: MpsSvc
-        state: stopped
-        start_mode: disabled
-      ignore_errors: true
+#   - name: Désactiver le service Pare-feu Windows (MpsSvc)
+#     ansible.windows.win_service:
+#       name: MpsSvc
+#       state: stopped
+#       start_mode: disabled
+#     ignore_errors: true
 
     - name: Autoriser toutes les connexions entrantes
       ansible.windows.win_powershell:
         script: |
           Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultInboundAction Allow
           Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultOutboundAction Allow
+
+    - name: désactiver la complexité des mots de passe
+      win_security_policy:
+        section: system access
+        key: passwordcomplexity
+        value: 0
+
+    - name: définir longueur minimale du mot de passe à 1
+      win_security_policy:
+        section: system access
+        key: minimumpasswordlength
+        value: 1
+
+    - name: autoriser mot de passe non historique (0 jours)
+      win_security_policy:
+        section: system access
+        key: passwordhistorysize
+        value: 0
+
+#   - name: autoriser modification immédiate du mot de passe (âge min = 0)
+#     win_security_policy:
+#       section: system access
+#       key: minimumpasswordage
+#       value: 0
+
+#   - name: désactiver l'expiration du mot de passe
+#     win_security_policy:
+#       section: system access
+#       key: maximumpasswordage
+#       value: 1
+

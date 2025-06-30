@@ -120,7 +120,7 @@ Get-ADObject `
   -SearchBase "CN=Extended-Rights,$configNC" `
   -LDAPFilter "(objectClass=controlAccessRight)" `
   -Properties Name, rightsGuid |
-  Format-Table Name, rightsGuid -AutoSize
+  Format-Table Name, rightsGuid -AutoSiz1
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -160,3 +160,31 @@ foreach( $result in $results ) {
 # Voir les SPN stocker dans l'atribue SPNMappings qui stockes les SPN représenter par l'alias HOST
 
 Get-ADObject -Identity "CN=Directory Service,CN=Windows NT,CN=Services,CN=Configuration,DC=PANTHEON,DC=GOD" -properties sPNMappings
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+# Crée la propriété DisableRestrictedAdmin avec une valeur de 0 pour permettre le pass the hash.
+New-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Lsa" -Name DisableRestrictedAdmin -PropertyType DWord -Value 0
+# Crée la propriété DisableRestrictedAdmin avec une valeur de 1.
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Lsa" -Name DisableRestrictedAdmin -Value 1
+# Crée la propriété DisableRestrictedAdmin avec une valeur de 1.
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Lsa" -Name DisableRestrictedAdmin -Value 0
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+#DPAPI
+# Crée une paire masterkey/credential
+cmdkey /add:pantheon.god /user:hades /pass:"D3@thL0rd!2024"
+
+# Vérifier la présence de cred et d'une masterkey
+ls "$env:APPDATA\Microsoft\Credentials" -Fo
+ls "$env:APPDATA\Microsoft\Protect" -Fo
+ls C:\Users\hades\AppData\Roaming\Microsoft\Credentials\
+ls C:\Users\hades\AppData\Roaming\Microsoft\Protect\
+#Supprimé les creds et la masterkey
+Remove-Item "$env:APPDATA\Microsoft\Protect\*" -Fo
+Remove-Item "$env:APPDATA\Microsoft\Credentials\*" -Fo
+Remove-Item "C:\Users\hades\AppData\Roaming\Microsoft\Credentials\*" -Fo
+Remove-Item "C:\Users\hades\AppData\Roaming\Microsoft\Protect\*" -Fo
+
+-------------------------------------------------------------------------------------------------------------------------------------------

@@ -9,7 +9,7 @@ all:
               ansible_host: 192.168.56.11
               data_path: "{{ playbook_dir }}/../vars"
               playbook_path: "{{ playbook_dir }}"
-            pantheon-enfer:
+            pantheon-enfers:
               ansible_host: 192.168.56.12
               data_path: "{{ playbook_dir }}/../vars"
               playbook_path: "{{ playbook_dir }}"

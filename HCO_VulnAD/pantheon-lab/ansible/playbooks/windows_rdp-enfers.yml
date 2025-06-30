@@ -2,23 +2,15 @@
 - import_playbook: windows_config.yml
   when: not windows_config_loaded | default(false)
 
-- name: Autoriser l'accès distant RDP aux dieux et cronos
-  hosts: extensions
+- name: Autoriser l'accès distant RDP aux utilisateurs du domaine
+  hosts:
+    - pantheon-enfers
   tasks:
     - name: Ajouter les dieux du domaine et cronos au groupe local Remote Desktop Users
       win_group_membership:
         name: "Remote Desktop Users"
         members:
-          - "PANTHEON\\cronos"
-          - "OLYMPE-GODS"
-        state: present
-
-    - name: Ajouter les dieux du domaine et cronos au groupe local Remote Management Users
-      win_group_membership:
-        name: "Remote Management Users"
-        members:
-          - "PANTHEON\\cronos"
-          - "OLYMPE-GODS"
+          - "PANTHEON\\orphee"
         state: present
 
     - name: Accorder le droit de connexion à distance aux membres du groupe Remote Desktop Users

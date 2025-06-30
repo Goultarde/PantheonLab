@@ -5,6 +5,7 @@
 
 - import_playbook: windows_coliseum.yml
 - import_playbook: windows_rdp-winrm_access.yml
+- import_playbook: windows_rdp-enfers.yml
 
 - name: Afficher un résumé de la configuration
   hosts: pantheon-dc01
@@ -15,5 +16,5 @@
           Configuration terminée :
           - Répertoire C:\coliseum créé
           - Tâche planifiée configurée pour Athena
-          - Accès RDP et WinRM configurés pour Cronos
+          - Accès WinRM et RDP configurés pour Cronos et les dieux
           - Droits complets sur C:\coliseum pour Cronos 

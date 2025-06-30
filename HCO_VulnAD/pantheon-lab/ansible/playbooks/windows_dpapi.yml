@@ -1,0 +1,22 @@
+---
+- import_playbook: windows_config.yml
+  when: not windows_config_loaded | default(false)
+
+- name: Configuration du Colisée
+  hosts: pantheon-enfers
+  tasks:
+    - name: Créer une tâche planifiée qui s'exécute sous hades
+      community.windows.win_scheduled_task:
+        name: RDP-Creds
+        description: "Injection du credential RDP avec cmdkey pour hades"
+        actions:
+          - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+            arguments: '/c cmdkey /add:RDP-SERVER /user:hades /pass:D3@thL0rd!2024'
+        triggers:
+          - type: boot
+#           repetition:
+#             interval: PT1M
+#             duration: PT24H
+        username: 'PANTHEON\\hades'
+        password: 'D3@thL0rd!2024'
+        logon_type: s4u
