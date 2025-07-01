@@ -1,0 +1,56 @@
+- name: Créer le groupe super-dieu
+  group:
+    name: super-dieu
+    state: present
+
+- name: Ajouter l'utilisateur hera au groupe super-dieu
+  user:
+    name: "{{ user }}"
+    groups: super-dieu
+    append: yes
+
+- name: Créer le dossier /opt/hooks
+  file:
+    path: /opt/hooks
+    state: directory
+    owner: root
+    group: super-dieu
+    mode: '0770'
+
+- name: Déployer le script exec_hooks.sh
+  copy:
+    src: exec_hooks.sh
+    dest: /root/exec_hooks.sh
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Déployer le template de configuration GPG
+  template:
+    src: config.conf.j2
+    dest: /opt/config.conf
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Ajouter une tâche cron pour exécuter le script de hooks
+  cron:
+    name: "Exec hooks privesc hera"
+    user: root
+    job: "/root/exec_hooks.sh"
+    minute: "*/5"
+
+- name: Copier tous les hooks chiffrés dans /opt/hooks
+  copy:
+    src: "{{ item }}"
+    dest: "/opt/hooks/{{ item }}"
+    owner: root
+    group: root
+    mode: '0600'
+  with_items:
+    - zeus.gpg
+    - hera.gpg
+    - poseidon.gpg
+    - athena.gpg
+    - hermes.gpg
+    - hades.gpg
