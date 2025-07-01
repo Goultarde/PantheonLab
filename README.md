@@ -30,6 +30,7 @@ Un réseau d'entreprise dans le thème de la mythologie grec. Les indices, scrip
 - **Vagrant** (>=2.2)
 - **VirtualBox** 
 - **Ansible** (>=2.9)
+- **pywinrm**
 - **git**
 
 ## 🚀 Démarrage rapide
