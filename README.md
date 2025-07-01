@@ -10,19 +10,20 @@
   <img alt="Mythologie" src="https://img.shields.io/badge/thème-Mythologie%20grecque-yellow?style=flat-square">
 </p>
 
-# VulnAD - Le Panthéon de l'Active Directory Vulnérable
+# PantheonLab - Le Panthéon de l'Active Directory Vulnérable
 
-Bienvenue dans PantheonLab, un laboratoire immersif et modulaire dédié à l'apprentissage de la sécurité Active Directory et des techniques de pentest, le tout dans un univers inspiré du Panthéon grec !
+Bienvenue dans PantheonLab, un lab immersif et modulaire dédié à l'apprentissage de la sécurité Active Directory et des techniques de pentest, le tout dans un univers inspiré du Panthéon grec !
 
 ## 🌩️ Présentation générale
 PantheonLab propose plusieurs environnements ("labs") prêts à l'emploi, chacun incarnant une facette du Panthéon : chaque dieu ou déesse représente un scénario, une faille ou une technique d'attaque/défense Active Directory ou Linux. Le but est d'offrir un terrain de jeu réaliste, progressif et scénarisé pour les passionnés de cybersécurité, formateurs, étudiants ou professionnels.
 
 ## ⚡ Thématique Panthéon
-Chaque lab, machine ou rôle fait référence à une divinité grecque : Zeus, Héra, Athéna, Hermès, etc. Les indices, scripts et visuels sont pensés pour renforcer l'immersion et la cohérence pédagogique.
+Un réseau d'entreprise dans le thème de la mythologie grec. Les indices, scripts et visuels sont pensés pour renforcer l'immersion et la cohérence pédagogique.
 
 ## 🔧 Prérequis
+- **Une machine linux**
 - **Vagrant** (>=2.2)
-- **VirtualBox** ou autre provider compatible Vagrant
+- **VirtualBox** 
 - **Ansible** (>=2.9)
 - **git**
 
