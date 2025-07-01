@@ -1,4 +1,9 @@
-![PantheonLab Logo](assets/pantheonlab.png)
+<div align="center">
+  <h1>
+    <img alt="PantheonLab Logo" src="assets/pantheonlab.png" width="500" />
+  </h1>
+  <br>
+</div>
 
 <p align="center">
   <a href="https://github.com/bbuddha/vulnad">
